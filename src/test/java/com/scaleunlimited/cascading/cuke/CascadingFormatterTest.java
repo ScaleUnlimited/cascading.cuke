@@ -31,7 +31,7 @@ public class CascadingFormatterTest {
     public static class WorkflowSD extends BaseStepDefinition {
 		public WorkflowSD() {
 			super();
-			setRegex("the MerchantScoreTool workflow is run");
+			setRegex("the WordCountTool workflow is run");
 		}
 
 		@Override
@@ -43,21 +43,21 @@ public class CascadingFormatterTest {
 							Integer.parseInt(_scenarioState.get("backtrace").toString()));
 			assertEquals(	"working", 
 							_scenarioState.get("workingDir").toString());
-			_scenarioState.put("MerchantScoreToolResult", new StringSSE("success"));
+			_scenarioState.put("WordCountToolResult", new StringSSE("success"));
 		}
     }
     
     public static class WorkflowResultSD extends BaseStepDefinition {
     	public WorkflowResultSD() {
 			super();
-			setRegex("the MerchantScoreTool workflow got the expected parameters.");
+			setRegex("the WordCountTool workflow got the expected parameters.");
     	}
 
 		@Override
 		public void run() {
 			super.run();
 			assertEquals(	"success", 
-							_scenarioState.get("MerchantScoreToolResult").toString());
+							_scenarioState.get("WordCountToolResult").toString());
 		}
     }
 	
@@ -71,13 +71,13 @@ public class CascadingFormatterTest {
 		formatter.addStepDefinition(new WorkflowResultSD());
 		
 		StringBuilder featureSource = new StringBuilder();
-		featureSource.append("Feature: MerchantScoreTool\n");
+		featureSource.append("Feature: WordCountTool\n");
 		featureSource.append("Scenario: Accesses parameters\n");
-		featureSource.append("When the MerchantScoreTool workflow is run\n");
+		featureSource.append("When the WordCountTool workflow is run\n");
 		featureSource.append("And the targetDate parameter is 2014-08-02\n");
 		featureSource.append("And the backtrace parameter is 30\n");
 		featureSource.append("And the workingDir parameter is working\n");
-		featureSource.append("Then the MerchantScoreTool workflow got the expected parameters.\n");
+		featureSource.append("Then the WordCountTool workflow got the expected parameters.\n");
         new Parser(formatter).parse(featureSource.toString(), "", 0);
         formatter.close();
 	}
