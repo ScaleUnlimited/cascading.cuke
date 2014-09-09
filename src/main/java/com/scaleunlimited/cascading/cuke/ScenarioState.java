@@ -3,6 +3,7 @@ package com.scaleunlimited.cascading.cuke;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A shared state where {@link StepDefinition} objects can communicate with
@@ -34,6 +35,10 @@ public class ScenarioState {
 	
 	public Collection<ScenarioStateElement> values() {
 		return _elementMap.values();
+	}
+	
+	public Set<Map.Entry<String, ScenarioStateElement>> entrySet() {
+		return _elementMap.entrySet();
 	}
 	
 	public void clear() {

@@ -8,5 +8,5 @@ public interface StepDefinition {
 	
 	boolean isMatchesStep(String keyword, String description);
 	
-	void run();
+	void run() throws StepFailureException;
 }

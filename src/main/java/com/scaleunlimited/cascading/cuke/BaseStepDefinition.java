@@ -44,7 +44,7 @@ public class BaseStepDefinition implements StepDefinition {
 	}
 
 	@Override
-	public void run() {
+	public void run() throws StepFailureException {
 	}
 
 }

@@ -4,6 +4,7 @@ import gherkin.formatter.PrettyFormatter;
 import gherkin.formatter.model.Background;
 import gherkin.formatter.model.DocString;
 import gherkin.formatter.model.Feature;
+import gherkin.formatter.model.Result;
 import gherkin.formatter.model.Scenario;
 import gherkin.formatter.model.Step;
 
@@ -76,9 +77,9 @@ public class CascadingFormatter extends PrettyFormatter {
 
 	@Override
 	public void scenario(Scenario scenario) {
-		super.scenario(scenario);
 		_isRecordingBackground = false;
 		runCurrentScenario();
+		super.scenario(scenario);
 		if (_currentFeature == null) {
 			throw new IllegalStateException("Scenario encountered outside scope of any feature");
 		}
@@ -129,8 +130,8 @@ public class CascadingFormatter extends PrettyFormatter {
 	
 	@Override
 	public void eof() {
-		super.eof();
 		runCurrentScenario();
+		super.eof();
 	}
 	
 	private static String getStepDescription(Step step) {
@@ -176,7 +177,12 @@ public class CascadingFormatter extends PrettyFormatter {
 
 	private void runStepDefinitions(List<StepDefinition> stepDefinitions) {
 		for (StepDefinition stepDefinition : stepDefinitions) {
-			stepDefinition.run();
+			try {
+				stepDefinition.run();
+				result(new Result(Result.PASSED, 0L, null, null));
+			} catch (StepFailureException e) {
+				result(new Result(Result.FAILED, 0L, e, null));
+			}
 		}
 	}
 }
