@@ -140,6 +140,10 @@ public class WorkflowCounterAssertionSSE implements ScenarioStateElement {
 		throw new RuntimeException(message);
 	}
 
+	// TODO This should probably be throwing an Exception instead, but then
+	// checkScenarioAssertions would need access to the Formatter in order
+	// to call result(), or perhaps we let the first assertion failure mask
+	// the results from all the following ones?  Ken is leaning that way.
 	public boolean isSatisfied(Long counterValue) {
 		if (counterValue == null) {
 			String assertionFailureString =
