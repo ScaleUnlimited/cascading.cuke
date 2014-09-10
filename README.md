@@ -39,7 +39,7 @@ Here are the contents of the mytests.cuke file referenced above:
 		Then the results in "output" should have a record where "word" is "test" and "count" is 3
 
 	Scenario: Words should be counted across text lines
-		Then the results in "output" should have a record where "word" is "dog" and "count" is 2
+		Then the results in "output" should have a record where "word" is "brown" and "count" is 2
 
 	Scenario: Words should not include punctuation
 		Then the results in "output" should have a record where "word" is "dog" and "count" is 1
