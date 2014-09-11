@@ -166,9 +166,13 @@ public class CascadingFormatter extends PrettyFormatter {
 	}
 
 	private void runStepDefinitions(List<StepDefinition> stepDefinitions) {
+		boolean isPreviousStepUndefined = false;
 		for (StepDefinition stepDefinition : stepDefinitions) {
-			if (stepDefinition == null) {
+			if (isPreviousStepUndefined) {
+				result(Result.SKIPPED);
+			} else if (stepDefinition == null) {
 				result(Result.UNDEFINED);
+				isPreviousStepUndefined = true;
 			} else {
 				try {
 					stepDefinition.run();
