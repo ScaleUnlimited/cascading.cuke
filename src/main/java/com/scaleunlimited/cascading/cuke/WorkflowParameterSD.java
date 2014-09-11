@@ -9,15 +9,15 @@ public class WorkflowParameterSD extends BaseStepDefinition {
 	}
 
 	@Override
-	public boolean isMatchesStep(String keyword, String description) {
+	public StepDefinition isMatchesStep(String keyword, String description) {
 		Matcher matcher = _pattern.matcher(description);
-		boolean result = matcher.matches();
-		if (result) {
-			String parameterName = matcher.group(1);
-			StringSSE parameterValue = new StringSSE(matcher.group(2));
-			_scenarioState.put(parameterName, parameterValue);
+		if (!(matcher.matches())) {
+			return null;
 		}
-		return result;
+		String parameterName = matcher.group(1);
+		StringSSE parameterValue = new StringSSE(matcher.group(2));
+		_scenarioState.put(parameterName, parameterValue);
+		return this;
 	}
 }
 

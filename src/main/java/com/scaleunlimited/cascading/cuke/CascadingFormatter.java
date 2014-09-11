@@ -105,9 +105,12 @@ public class CascadingFormatter extends PrettyFormatter {
 	private StepDefinition defineStep(Step step) {
 		StepDefinition result = null;
 		for (StepDefinition stepDefinition : _stepDefinitions) {
-			if (stepDefinition.isMatchesStep(step.getKeyword(), step.getName())) {
+			StepDefinition matchingStepDefinition = 
+				stepDefinition.isMatchesStep(	step.getKeyword(), 
+												step.getName());
+			if (matchingStepDefinition != null) {
 				if (result == null) {
-					result = stepDefinition;
+					result = matchingStepDefinition;
 				} else {
 					// TODO Am I supposed to call syntaxError here?
 					String message = 

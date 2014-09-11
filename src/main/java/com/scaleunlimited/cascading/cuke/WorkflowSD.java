@@ -28,17 +28,7 @@ public abstract class WorkflowSD extends BaseStepDefinition {
 			throw new StepFailureException("Flow failed", e);
 		}
 		
-		// TODO Here we're checking the assertions within WorkflowSD.run(),
-		// instead of performing these checks within each
-		// WorkflowCounterAssertionSD.run().  This is because the latter
-		// don't get instantiated with each matching step's details, but rather
-		// stuff those details into the ScenarioState element each creates.
-		// Note that this is similar to the way that a WorkflowParameterSD
-		// works (i.e., its run() method does nothing).
-		if (!WorkflowCounterAssertionSSE.checkScenarioAssertions(	flowResult.getCounters(),
-																	_scenarioState)) {
-			throw new StepFailureException("At least one counter assertion failed");
-		}
+		_scenarioState.put(_name, new FlowResultSSE(flowResult));
 	}
 	
 	protected String getName() {
