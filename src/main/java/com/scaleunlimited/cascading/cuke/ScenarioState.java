@@ -1,5 +1,6 @@
 package com.scaleunlimited.cascading.cuke;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +42,10 @@ public class ScenarioState {
 		return _elementMap.entrySet();
 	}
 	
-	public void clear() {
+	public void clear() throws IOException {
+		for (ScenarioStateElement element : _elementMap.values()) {
+			element.close();
+		}
 		_elementMap.clear();
 	}
 }

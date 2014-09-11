@@ -106,8 +106,7 @@ public class CascadingFormatter extends PrettyFormatter {
 		StepDefinition result = null;
 		for (StepDefinition stepDefinition : _stepDefinitions) {
 			StepDefinition matchingStepDefinition = 
-				stepDefinition.defineStep(	step.getKeyword(), 
-												step.getName());
+				stepDefinition.defineStep(step.getKeyword(), step.getName());
 			if (matchingStepDefinition != null) {
 				if (result == null) {
 					result = matchingStepDefinition;
@@ -153,17 +152,11 @@ public class CascadingFormatter extends PrettyFormatter {
 	}
 
 	private void resetScenarioState() {
-		for (ScenarioStateElement stateElement : _scenarioState.values()) {
-			try {
-				stateElement.close();
-			} catch (IOException e) {
-				String message = 
-					String.format(	"Error closing scenario state element %s",
-									stateElement);
-				LOGGER.error(message, e);
-			}
+		try {
+			_scenarioState.clear();
+		} catch (IOException e) {
+			LOGGER.error("Error closing scenario state", e);
 		}
-		_scenarioState.clear();
 		_backgroundStepDefinitions.clear();
 		_scenarioStepDefinitions.clear();
 	}

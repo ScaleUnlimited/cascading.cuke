@@ -15,7 +15,8 @@ public class WorkflowParameterSD extends BaseStepDefinition {
 			return null;
 		}
 		String parameterName = matcher.group(1);
-		StringSSE parameterValue = new StringSSE(matcher.group(2));
+		SimpleSSE<String> parameterValue = 
+			new SimpleSSE<String>(matcher.group(2));
 		_scenarioState.put(parameterName, parameterValue);
 		return this;
 	}

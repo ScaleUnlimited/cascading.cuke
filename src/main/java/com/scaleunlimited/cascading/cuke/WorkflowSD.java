@@ -28,7 +28,7 @@ public abstract class WorkflowSD extends BaseStepDefinition {
 			throw new StepFailureException("Flow failed", e);
 		}
 		
-		_scenarioState.put(_name, new FlowResultSSE(flowResult));
+		_scenarioState.put(_name, new SimpleSSE<FlowResult>(flowResult));
 	}
 	
 	protected String getName() {

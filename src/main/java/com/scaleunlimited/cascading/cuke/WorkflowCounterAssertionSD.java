@@ -146,16 +146,17 @@ public class WorkflowCounterAssertionSD extends BaseStepDefinition {
 		throw new RuntimeException(message);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void run() throws StepFailureException {
 		super.run();
 
-		FlowResultSSE flowResultSSE = 
-			(FlowResultSSE)(_scenarioState.get(_workflowName));
+		SimpleSSE<FlowResult> flowResultSSE = 
+			(SimpleSSE<FlowResult>)(_scenarioState.get(_workflowName));
 		if (flowResultSSE == null) {
 			throw new StepFailureException("Workflow failed (no flow result)?");
 		}
-		FlowResult flowResult = flowResultSSE.toFlowResult();
+		FlowResult flowResult = flowResultSSE.getValue();
 		Long counterValue = flowResult.getCounters().get(_counterKey);
 		if (counterValue == null) {
 			String assertionFailureString =

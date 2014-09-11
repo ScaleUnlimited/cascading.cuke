@@ -71,7 +71,7 @@ public class CascadingFormatterTest {
 			super("WordCountTool");
 		}
 
-		@SuppressWarnings("rawtypes")
+		@SuppressWarnings({ "rawtypes", "unchecked" })
 		@Override
 		public Flow createFlow() {
 			
@@ -79,7 +79,8 @@ public class CascadingFormatterTest {
 				BasePlatform platform = 
 					new LocalPlatform(CascadingFormatterTest.class);
 				
-				String inputText = _scenarioState.get("inputText").toString();
+				String inputText = 
+					((SimpleSSE<String>)(_scenarioState.get("inputText"))).getValue();
 				writeInputText(inputText);
 				BasePath inputTextPath =
 					platform.makePath(TEST_DIR + INPUT_TEXT_DIRNAME);
