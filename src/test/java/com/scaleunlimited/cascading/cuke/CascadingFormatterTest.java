@@ -127,16 +127,28 @@ public class CascadingFormatterTest {
 		featureSource.append("Scenario: Correctly computes word frequencies\n");
 		featureSource.append("When the WordCountTool workflow is run\n");
 		featureSource.append("And the inputText parameter is Now is the time for all good men to come to the aid of their country.\n");
+		
+		// These should all pass
 		featureSource.append("Then the WordCountTool com.scaleunlimited.cascading.cuke.CascadingFormatterTest$WordCountCounters.TOTAL_WORDS counter value is 16\n");
 		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.the counter value is 2\n");
 		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.to counter value is at least 2\n");
 		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.good counter value is >=1\n");
 		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.their counter value is at most 1\n");
-		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.men counter value is greater than 0\n");
+		
+		// This one should fail (as there's only one instance of "men"):
+		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.men counter value is greater than 1\n");
+		
+		// This one should pass
 		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.come counter value is less than 2\n");
-        Parser parser = new Parser(formatter);
+		
+		// This one has no definition:
+		featureSource.append("Then this undefined assertion would still need to be implemented\n");
+		
+		Parser parser = new Parser(formatter);
 		parser.parse(featureSource.toString(), "", 0);
         formatter.close();
+        
+        // TODO Figure out how to validate the output
 	}
 	
 	private static void writeInputText(String inputText) {

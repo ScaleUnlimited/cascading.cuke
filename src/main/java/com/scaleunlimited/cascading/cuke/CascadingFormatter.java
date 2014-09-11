@@ -15,7 +15,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO delegate to PrettyFormatter
+// TODO delegate to PrettyFormatter?
 public class CascadingFormatter extends PrettyFormatter {
     static final Logger LOGGER = LoggerFactory.getLogger(CascadingFormatter.class);
 
@@ -56,10 +56,9 @@ public class CascadingFormatter extends PrettyFormatter {
 		_currentScenario = null;
 		_currentBackground = null;
 		_backgroundSteps.clear();
-		// TODO Maybe this is actually valid syntax, so log a warning instead?
 		if (_isRecordingBackground) {
 			_isRecordingBackground = false;
-			throw new IllegalStateException("New feature before background complete (i.e., no scenarios?)");
+			LOGGER.warn("New feature before background complete (i.e., previous feature has background, but no scenarios.)");
 		}
 	}
 
@@ -121,12 +120,7 @@ public class CascadingFormatter extends PrettyFormatter {
 				}
 			}
 		}
-		if (result == null) {
-			// TODO Am I supposed to call syntaxError here?
-			String message = 
-				String.format("No step definitions match %s", getStepDescription(step));
-			throw new RuntimeException(message);
-		}
+
 		return result;
 	}
 	
@@ -173,11 +167,15 @@ public class CascadingFormatter extends PrettyFormatter {
 
 	private void runStepDefinitions(List<StepDefinition> stepDefinitions) {
 		for (StepDefinition stepDefinition : stepDefinitions) {
-			try {
-				stepDefinition.run();
-				result(new Result(Result.PASSED, 0L, null, null));
-			} catch (StepFailureException e) {
-				result(new Result(Result.FAILED, 0L, e, null));
+			if (stepDefinition == null) {
+				result(Result.UNDEFINED);
+			} else {
+				try {
+					stepDefinition.run();
+					result(new Result(Result.PASSED, 0L, null, null));
+				} catch (StepFailureException e) {
+					result(new Result(Result.FAILED, 0L, e, null));
+				}
 			}
 		}
 	}
