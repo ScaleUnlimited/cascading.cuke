@@ -13,7 +13,7 @@ public interface StepDefinition {
 	 * (though not necessarily this one, as it may incorporate state harvested
 	 * from the <code>description</code>), or null if the step doesn't match.
 	 */
-	StepDefinition isMatchesStep(String keyword, String description);
+	StepDefinition defineStep(String keyword, String description);
 	
 	/**
 	 * Execute the step definition.  These methods should be called in the

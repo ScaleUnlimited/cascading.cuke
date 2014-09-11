@@ -38,7 +38,7 @@ public class BaseStepDefinition implements StepDefinition {
 	}
 	
 	@Override
-	public StepDefinition isMatchesStep(String keyword, String description) {
+	public StepDefinition defineStep(String keyword, String description) {
 		Matcher matcher = _pattern.matcher(description);
 		return	(	matcher.matches() ?
 					this

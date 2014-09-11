@@ -92,7 +92,7 @@ public class WorkflowCounterAssertionSD extends BaseStepDefinition {
 	}
 	
 	@Override
-	public StepDefinition isMatchesStep(String keyword, String description) {
+	public StepDefinition defineStep(String keyword, String description) {
 		Matcher matcher = _pattern.matcher(description);
 		if (!(matcher.matches())) {
 			return null;

@@ -106,7 +106,7 @@ public class CascadingFormatter extends PrettyFormatter {
 		StepDefinition result = null;
 		for (StepDefinition stepDefinition : _stepDefinitions) {
 			StepDefinition matchingStepDefinition = 
-				stepDefinition.isMatchesStep(	step.getKeyword(), 
+				stepDefinition.defineStep(	step.getKeyword(), 
 												step.getName());
 			if (matchingStepDefinition != null) {
 				if (result == null) {
