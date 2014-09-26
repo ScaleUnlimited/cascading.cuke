@@ -1,7 +1,10 @@
-package com.scaleunlimited.cascading.cuke;
+package com.scaleunlimited.cascading.cuke.stepdefinitions;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.scaleunlimited.cascading.cuke.ScenarioState;
+import com.scaleunlimited.cascading.cuke.StepFailureException;
 
 /**
  * A {@link Pattern}-based {@link StepDefinition}

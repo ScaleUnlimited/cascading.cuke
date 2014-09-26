@@ -1,4 +1,6 @@
-package com.scaleunlimited.cascading.cuke;
+package com.scaleunlimited.cascading.cuke.stepdefinitions;
+
+import com.scaleunlimited.cascading.cuke.StepFailureException;
 
 /**
  * The implementation of a step.

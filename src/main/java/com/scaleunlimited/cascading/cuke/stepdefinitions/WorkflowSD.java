@@ -1,9 +1,11 @@
-package com.scaleunlimited.cascading.cuke;
+package com.scaleunlimited.cascading.cuke.stepdefinitions;
 
 import cascading.flow.Flow;
 
 import com.scaleunlimited.cascading.FlowResult;
 import com.scaleunlimited.cascading.FlowRunner;
+import com.scaleunlimited.cascading.cuke.SimpleSSE;
+import com.scaleunlimited.cascading.cuke.StepFailureException;
 
 @SuppressWarnings("rawtypes")
 public abstract class WorkflowSD extends BaseStepDefinition {

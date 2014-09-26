@@ -179,9 +179,11 @@
 			<format property="timestamp" pattern="MMM dd yyyy, HH:mm:ss" />
 		</tstamp>
 
-		<jar jarfile="${build.dir}/${jar.name}"
-		     basedir="${build.dir.main-classes}">
-			<manifest>
+		<jar jarfile="${build.dir}/${jar.name}">
+			<fileset dir="${build.dir.main-classes}" />
+			<fileset dir="${main.res.dir}" />
+
+            <manifest>
 				<section name="cascading.cuke">
 					<attribute name="Implementation-Vendor"
 					           value="TransPac Software, Inc" />
@@ -194,6 +196,40 @@
 				</section>
 			</manifest>
 		</jar>
+	</target>
+
+	<target name="onejar" 
+		depends="jar"
+		description="--> Build a single jar for main.class.name with dependent jars">
+		
+		<delete dir="${build.dir.onejar}" />
+		<mkdir dir="${build.dir.onejar}" />
+
+		<!-- copy libs -->
+
+		<copy todir="${build.dir.onejar}/lib" flatten="true">
+			<path refId="runtime.classpath" />
+		</copy>
+
+		<copy todir="${build.dir.onejar}">
+			<fileset file="${build.dir}/${jar.name}" />
+		</copy>
+		<move file="${build.dir.onejar}/${jar.name}" tofile="${build.dir.onejar}/main.jar"/>
+		
+        <taskdef name="one-jar" classname="com.simontuffs.onejar.ant.OneJarTask" 
+            classpath="${lib.dir}/one-jar-ant-task-0.97.jar" onerror="report"/>
+
+		<!-- Construct the One-JAR file -->   
+		<one-jar destfile="${build.dir}/${onejar.jar.name}" >
+            <main jar="${build.dir.onejar}/main.jar">
+            </main>
+			<lib>
+	            <fileset dir="${build.dir.onejar}/lib"/>
+			</lib>
+			<manifest>
+				<attribute name="One-Jar-Main-Class" value="${main.class.name}"/> 
+			</manifest>
+		</one-jar>
 	</target>
 
 	<!-- ================================================================== -->

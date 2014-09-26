@@ -15,6 +15,9 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.scaleunlimited.cascading.cuke.stepdefinitions.BaseStepDefinition;
+import com.scaleunlimited.cascading.cuke.stepdefinitions.StepDefinition;
+
 // TODO delegate to PrettyFormatter?
 public class CascadingFormatter extends PrettyFormatter {
     static final Logger LOGGER = LoggerFactory.getLogger(CascadingFormatter.class);

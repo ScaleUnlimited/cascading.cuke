@@ -1,6 +1,8 @@
-package com.scaleunlimited.cascading.cuke;
+package com.scaleunlimited.cascading.cuke.stepdefinitions;
 
 import java.util.regex.Matcher;
+
+import com.scaleunlimited.cascading.cuke.SimpleSSE;
 
 public class WorkflowParameterSD extends BaseStepDefinition {
 	public WorkflowParameterSD() {

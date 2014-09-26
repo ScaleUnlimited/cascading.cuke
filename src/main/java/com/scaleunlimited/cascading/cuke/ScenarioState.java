@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.scaleunlimited.cascading.cuke.stepdefinitions.StepDefinition;
+
 /**
  * A shared state where {@link StepDefinition} objects can communicate with
  * one another. For example, the parameters for a work flow can be placed into

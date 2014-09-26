@@ -1,9 +1,11 @@
-package com.scaleunlimited.cascading.cuke;
+package com.scaleunlimited.cascading.cuke.stepdefinitions;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.scaleunlimited.cascading.FlowResult;
+import com.scaleunlimited.cascading.cuke.SimpleSSE;
+import com.scaleunlimited.cascading.cuke.StepFailureException;
 
 public class WorkflowCounterAssertionSD extends BaseStepDefinition {
 	private static final Pattern EQUALS_PATTERN = Pattern.compile("^([0-9]+)$");
