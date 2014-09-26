@@ -28,23 +28,23 @@ public class CascadingFormatterTest {
 		
 		// These should all pass:
 		featureSource.append("Then the WordCountTool com.scaleunlimited.cascading.cuke.stepdefinitions.WordCountSD$WordCountCounters.TOTAL_WORDS counter value is 16\n");
-		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.the counter value is 2\n");
-		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.to counter value is at least 2\n");
-		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.good counter value is >=1\n");
-		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.their counter value is at most 1\n");
+		featureSource.append("And the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.the counter value is 2\n");
+		featureSource.append("And the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.to counter value is at least 2\n");
+		featureSource.append("And the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.good counter value is >=1\n");
+		featureSource.append("And the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.their counter value is at most 1\n");
 		
 		// This one should fail (as there's only one instance of "men"):
-		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.men counter value is greater than 1\n");
+		featureSource.append("And the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.men counter value is greater than 1\n");
 		
 		// This one should pass:
-		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.come counter value is less than 2\n");
+		featureSource.append("And the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.come counter value is less than 2\n");
 		
 		// This one has no definition:
-		featureSource.append("Then this undefined assertion would still need to be implemented\n");
+		featureSource.append("And this undefined assertion would still need to be implemented\n");
 		
 		// This one would pass, but it gets skipped because the previous one 
 		// was undefined:
-		featureSource.append("Then the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.men counter value is 1\n");
+		featureSource.append("And the WordCountTool WordCountCounters.FREQUENCY_BY_WORD.men counter value is 1\n");
 
 		Parser parser = new Parser(formatter);
 		parser.parse(featureSource.toString(), "", 0);
