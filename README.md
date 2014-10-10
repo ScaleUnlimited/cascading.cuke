@@ -101,4 +101,5 @@ Here are the contents of the mytests.cuke file referenced above:
         	And the workflow "WordCountCounters.WORDS" counter should be < 7
         	And the workflow "WORDS" counter should be at most 6
         	And the workflow "WORDS" counter should be <= 6
+        	
 </pre>
