@@ -34,9 +34,10 @@
 	</repositories>
 	
     <properties>
-        <cascading.version>2.1.6</cascading.version>
-        <hadoop.version>1.0.4</hadoop.version>
-        <gherkin.version>2.12.2</gherkin.version>
+        <hadoop.version>2.2.0</hadoop.version>
+        <cascading.version>2.5.5</cascading.version>
+        <cascading.utils.version>2.5.0</cascading.utils.version>
+        <cucumber.version>1.1.8</cucumber.version>
     </properties>
     
 	<dependencies>
@@ -68,13 +69,13 @@
         <dependency>
             <groupId>com.scaleunlimited</groupId>
             <artifactId>cascading.utils</artifactId>
-            <version>2.1.5</version>
+            <version>${cascading.utils.version}</version>
         </dependency>
         
         <dependency>
             <groupId>info.cukes</groupId>
-            <artifactId>gherkin</artifactId>
-            <version>${gherkin.version}</version>
+            <artifactId>cucumber-java</artifactId>
+            <version>${cucumber.version}</version>
         </dependency>
         
         <dependency>
@@ -83,15 +84,9 @@
             <version>1.7.2</version>
         </dependency>
         
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.2</version>
-        </dependency>
-
 		<dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
+            <artifactId>hadoop-client</artifactId>
             <version>${hadoop.version}</version>
             <exclusions>
                 <exclusion>
@@ -114,11 +109,25 @@
         </dependency>
         
         <!-- Test -->
+
+        <dependency>
+            <groupId>info.cukes</groupId>
+            <artifactId>cucumber-junit</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
         
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.2</version>
+            <scope>test</scope>
+        </dependency>
+
 		<dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.10</version>
+            <version>4.11</version>
             <scope>test</scope>
         </dependency>
 
