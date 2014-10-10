@@ -40,66 +40,66 @@ Here are the contents of the mytests.cuke file referenced above:
 		Then the workflow should fail
 	
 	Scenario: Words should be lower-cased before being counted
-        	Given text records in the workflow "build/test/WordCountTool/input" directory:
-            		| Test TEST test |
+		Given text records in the workflow "build/test/WordCountTool/input" directory:
+			| Test TEST test |
 		When the workflow is run 
-        	Then the workflow "output" result should have a record where:
-        		| word | test |
+		Then the workflow "output" result should have a record where:
+			| word | test |
 			| count | 3 |
 
 	Scenario: Words should be counted across text lines
-        	Given text records in the workflow "build/test/WordCountTool/input" directory:
-            		| The quick red fox jumped over the lazy brown dog. |
-            		| brown cow |
+		Given text records in the workflow "build/test/WordCountTool/input" directory:
+			| The quick red fox jumped over the lazy brown dog. |
+			| brown cow |
 		When the workflow is run 
-        	Then the workflow "output" result should have a record where:
-        		| word | brown |
+		Then the workflow "output" result should have a record where:
+			| word | brown |
 			| count | 2 |
 
 	Scenario: Words should not include punctuation
 		Given text records in the workflow "build/test/WordCountTool/input" directory:
-            		| My cat. |
+			| My cat. |
 		When the workflow is run
-        	Then the workflow "output" result should have a record where:
-        		| word | cat |
+		Then the workflow "output" result should have a record where:
+			| word | cat |
 			| count | 1 |
 
 	Scenario: We should be able to filter out low-frequency words
-        	Given text records in the workflow "build/test/WordCountTool/input" directory:
-            		| one two three |
-        		| word1 word1 |
-            		| word2 word2 |
-        	And the workflow parameter mincount is 2
-	        When the workflow is run
-        	Then the workflow "output" result should have records where:
-        		| word | count |
-        		| word1 | 2 |
-        	And the workflow "output" result should only have records where:
-        		| word | count |
-        		| word1 | 2 |
-        		| word2 | 2 |
-        	And the workflow "output" result should not have records where:
-        		| word |
-        		| one |
-        		| two |
-        		| three |
+		Given text records in the workflow "build/test/WordCountTool/input" directory:
+			| one two three |
+			| word1 word1 |
+			| word2 word2 |
+		And the workflow parameter mincount is 2
+		When the workflow is run
+		Then the workflow "output" result should have records where:
+			| word | count |
+			| word1 | 2 |
+		And the workflow "output" result should only have records where:
+			| word | count |
+			| word1 | 2 |
+			| word2 | 2 |
+		And the workflow "output" result should not have records where:
+			| word |
+			| one |
+			| two |
+			| three |
 
 	Scenario: We should keep track of the number of input records, using
 			Hadoop counters.
-        	Given text records in the workflow "build/test/WordCountTool/input" directory:
-            		| line one |
-            		| line two |
-            		| line three |
-        	When the workflow is run
-        	Then the workflow "VALID_LINES" counter should be 3
-        	And the workflow "INVALID_LINES" counter should be 0
-        	And the workflow "WORDS" counter should be more than 5
-        	And the workflow "WORDS" counter should be greater than 5
-        	And the workflow "WORDS" counter should be > 5
-        	And the workflow "WORDS" counter should be at least 6
-        	And the workflow "WORDS" counter should be >= 6
-        	And the workflow "WordCountCounters.WORDS" counter should be < 7
-        	And the workflow "WORDS" counter should be at most 6
-        	And the workflow "WORDS" counter should be <= 6
+		Given text records in the workflow "build/test/WordCountTool/input" directory:
+			| line one |
+			| line two |
+			| line three |
+		When the workflow is run
+		Then the workflow "VALID_LINES" counter should be 3
+		And the workflow "INVALID_LINES" counter should be 0
+		And the workflow "WORDS" counter should be more than 5
+		And the workflow "WORDS" counter should be greater than 5
+		And the workflow "WORDS" counter should be > 5
+		And the workflow "WORDS" counter should be at least 6
+		And the workflow "WORDS" counter should be >= 6
+		And the workflow "WordCountCounters.WORDS" counter should be < 7
+		And the workflow "WORDS" counter should be at most 6
+		And the workflow "WORDS" counter should be <= 6
         	
 </pre>
