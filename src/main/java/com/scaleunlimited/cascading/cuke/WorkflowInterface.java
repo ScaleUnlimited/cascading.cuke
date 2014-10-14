@@ -1,23 +1,22 @@
 package com.scaleunlimited.cascading.cuke;
 
+import java.util.Map;
+
 import cascading.flow.Flow;
+import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntryCollector;
 import cascading.tuple.TupleEntryIterator;
 
 public interface WorkflowInterface {
 
-    /**
-     * @param platformName
-     * @param parameters
-     * @return
-     * @throws Exception
-     */
     @SuppressWarnings("rawtypes")
-    public Flow createFlow(WorkflowPlatform platform, WorkflowParams parameters) throws Throwable;
+    public Flow createFlow(WorkflowContext context) throws Throwable;
     
-    // public String getDirectoryPath(WorkflowPlatform platformName, String directoryName) throws Exception;
+    public Tuple createTuple(WorkflowContext context, String recordName, Map<String, String> tupleValues) throws Throwable;
+
+    public TupleEntryIterator openBinaryForRead(WorkflowContext context, String path) throws Throwable;
     
-    public TupleEntryIterator openBinaryForRead(WorkflowPlatform platformName, WorkflowParams params, String resultsName) throws Throwable;
+    public TupleEntryCollector openBinaryForWrite(WorkflowContext context, String path, String recordName) throws Throwable;
     
-    public TupleEntryCollector openBinaryForWrite(WorkflowPlatform platformName, String directoryName) throws Throwable;
+    public TupleEntryCollector openTextForWrite(WorkflowContext context, String path) throws Throwable;
 }

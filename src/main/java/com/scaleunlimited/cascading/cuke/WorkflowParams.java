@@ -59,4 +59,8 @@ public class WorkflowParams {
         return _params.toString();
     }
 
+	public void reset() {
+		_params.clear();
+	}
+
 }

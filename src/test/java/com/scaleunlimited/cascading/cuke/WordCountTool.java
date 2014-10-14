@@ -1,10 +1,12 @@
 package com.scaleunlimited.cascading.cuke;
 
 import java.io.File;
+import java.util.Map;
 
 import cascading.flow.Flow;
 import cascading.flow.FlowConnector;
 import cascading.flow.FlowDef;
+import cascading.flow.FlowProcess;
 import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.flow.local.LocalFlowProcess;
 import cascading.operation.expression.ExpressionFilter;
@@ -18,6 +20,7 @@ import cascading.tap.Tap;
 import cascading.tap.hadoop.Hfs;
 import cascading.tap.local.FileTap;
 import cascading.tuple.Fields;
+import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntryCollector;
 import cascading.tuple.TupleEntryIterator;
 
@@ -27,7 +30,7 @@ import com.scaleunlimited.cascading.hadoop.HadoopPlatform;
 import com.scaleunlimited.cascading.local.KryoScheme;
 import com.scaleunlimited.cascading.local.LocalPlatform;
 
-public class WordCountTool implements WorkflowInterface {
+public class WordCountTool extends BaseTool implements WorkflowInterface {
 
 	private enum WordCountCounters {
 		VALID_LINES,
@@ -46,21 +49,24 @@ public class WordCountTool implements WorkflowInterface {
 
     @SuppressWarnings("rawtypes")
     @Override
-    public Flow createFlow(WorkflowPlatform platformName, WorkflowParams params) throws Throwable {
+    public Flow createFlow(WorkflowContext context) throws Throwable {
         // TODO avoid using cascading.utils support here.
         // So call local makeInputTextTap(platformName, isText?)
-        BasePlatform platform =  makePlatform(platformName);
+        BasePlatform basePlatform =  makePlatform(context.getDefaultPlatform());
 
+        WorkflowParams params = context.getParamsCopy();
+        
         String inputDir = params.remove(INPUT_PARAM_NAME);
-        BasePath inputPath = platform.makePath(inputDir);
+        BasePath inputPath = basePlatform.makePath(inputDir);
         if (!inputPath.exists()) {
         	throw new IllegalArgumentException(String.format("Input path %s doesn't exist", inputPath));
         }
         
-        Tap source = platform.makeTap(platform.makeTextScheme(), inputPath);
+        Tap source = basePlatform.makeTap(basePlatform.makeTextScheme(), inputPath);
         
         String outputDir = params.remove(OUTPUT_PARAM_NAME);
-        Tap sink = makeBinarySink(platformName, new Fields("word", "count"), outputDir);
+        BasePath outputPath = basePlatform.makePath(outputDir);
+        Tap sink = makeBinarySink(context.getDefaultPlatform(), new Fields("word", "count"), outputPath.getAbsolutePath());
         
         String minCountStr = params.removeOptional("mincount");
         int minCount = (minCountStr == null ? 1 : Integer.parseInt(minCountStr));
@@ -85,11 +91,47 @@ public class WordCountTool implements WorkflowInterface {
             .addSource(wordPipe, source)
             .addTailSink(wordPipe, sink);
         
-        FlowConnector flowConnector = platform.makeFlowConnector();
+        FlowConnector flowConnector = basePlatform.makeFlowConnector();
         return flowConnector.connect(flowDef);
     }
     
-    private Tap makeBinarySink(WorkflowPlatform platform, Fields fields, String outputDir) {
+    @Override
+    public TupleEntryIterator openBinaryForRead(WorkflowContext context, String path) throws Throwable {
+    	if (!path.equals(OUTPUT_PARAM_NAME)) {
+            throw new IllegalArgumentException(String.format("The binary output directory \"%s\" is unknown, must be \"%s\"", path, OUTPUT_PARAM_NAME));
+    	}
+    	
+    	Fields fields = new Fields("word", "count");
+    	return WorkflowUtils.openBinaryForRead(context.getDefaultPlatform(), convertPath(context, path), fields);
+    }
+
+	@Override
+	public TupleEntryCollector openTextForWrite(WorkflowContext context, String path) throws Throwable {
+		return WorkflowUtils.openTextForWrite(context.getDefaultPlatform(), convertPath(context, path));
+	}
+
+	@Override
+	public TupleEntryCollector openBinaryForWrite(WorkflowContext context, String path, String recordName) throws Throwable {
+        throw new UnsupportedOperationException(String.format("The WordCountTool doesn't support creating test output data"));
+	}
+	
+	@Override
+	public Tuple createTuple(WorkflowContext context, String recordName, Map<String, String> tupleValues) throws Throwable {
+        throw new UnsupportedOperationException(String.format("The WordCountTool doesn't support creating test output data"));
+	}
+	
+    private String convertPath(WorkflowContext context, String path) {
+    	if (path.equals(INPUT_PARAM_NAME)) {
+    		return context.getParams().get(INPUT_PARAM_NAME);
+    	} if (path.equals(OUTPUT_PARAM_NAME)) {
+    		return context.getParams().get(OUTPUT_PARAM_NAME);
+    	} else {
+    		return path;
+    	}
+    }
+    
+    @SuppressWarnings("rawtypes")
+	private Tap makeBinarySink(WorkflowPlatform platform, Fields fields, String outputDir) {
         if (platform == WorkflowPlatform.DISTRIBUTED) {
             return new Hfs(new cascading.scheme.hadoop.SequenceFile(fields), outputDir, SinkMode.REPLACE);
         } else if (platform == WorkflowPlatform.LOCAL) {
@@ -102,41 +144,5 @@ public class WordCountTool implements WorkflowInterface {
             throw new IllegalArgumentException(String.format("The workflow platform %s is unknown", platform));
         }
     }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public TupleEntryIterator openBinaryForRead(WorkflowPlatform platform, WorkflowParams params, String resultsName) throws Throwable {
-    	if (!resultsName.equals(OUTPUT_PARAM_NAME)) {
-            throw new IllegalArgumentException(String.format("The output result \"%s\" is unknown", resultsName));
-    	}
-    	
-    	String outputPath = params.get(OUTPUT_PARAM_NAME);
-    	Fields fields = new Fields("word", "count");
-        if (platform == WorkflowPlatform.DISTRIBUTED) {
-            Tap tap = new Hfs(new cascading.scheme.hadoop.SequenceFile(fields), outputPath);
-            return tap.openForRead(new HadoopFlowProcess());
-        } else if (platform == WorkflowPlatform.LOCAL) {
-            Tap tap = new FileTap(new KryoScheme(fields), outputPath);
-            return tap.openForRead(new LocalFlowProcess());
-        } else {
-            throw new IllegalArgumentException(String.format("The workflow platform %s is unknown", platform));
-        }
-    }
-
-    private BasePlatform makePlatform(WorkflowPlatform platform) {
-        if (platform == WorkflowPlatform.DISTRIBUTED) {
-            return new HadoopPlatform(this.getClass());
-        } else if (platform == WorkflowPlatform.LOCAL) {
-            return new LocalPlatform(this.getClass());
-        } else {
-            throw new IllegalArgumentException("Unknown platform: " + platform);
-        }
-    }
-
-	@Override
-	public TupleEntryCollector openBinaryForWrite(WorkflowPlatform platformName, String resultsName) throws Throwable {
-		// TODO use makeBinaryTap call, that's also used by createFlow call
-		return null;
-	}
 
 }

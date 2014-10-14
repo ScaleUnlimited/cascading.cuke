@@ -27,6 +27,10 @@ public class WorkflowContext {
     	return getCurrentContext().getDefaultPlatform();
     }
     
+	public static WorkflowInterface getCurrentWorkflow() {
+		return getCurrentContext().getWorkflow();
+	}
+
     public static WorkflowContext getContext(String workflowName) {
         CURRENT_WORKFLOW = workflowName;
 
@@ -43,17 +47,18 @@ public class WorkflowContext {
     }
     
     public static void registerWorkflow(String workflowName, Class clazz) {
-        if (!WorkflowInterface.class.isAssignableFrom(clazz)) {
-            throw new IllegalArgumentException(String.format("The class %s must implement the WorkflowInterface", workflowName));
-        }
-
         WorkflowContext context = WORKFLOW_CONTEXTS.get(workflowName);
         if (context == null) {
+            if (!WorkflowInterface.class.isAssignableFrom(clazz)) {
+                throw new IllegalArgumentException(String.format("The class %s must implement the WorkflowInterface", workflowName));
+            }
+
             // set up default context
             context = new WorkflowContext(workflowName, clazz);
             WORKFLOW_CONTEXTS.put(workflowName, context);
         } else if (context.getWorkflowClass().equals(clazz)) {
-            // Ignore duplicate registration
+            // Ignore duplicate registration - just clear out parameters
+        	context.resetParameters();
         } else {
             throw new IllegalStateException(String.format(   "The workflow name %s has already been registered with class %s", 
                                                             workflowName, 
@@ -63,13 +68,17 @@ public class WorkflowContext {
         CURRENT_WORKFLOW = workflowName;
     }
     
-    private String _name;
+	private String _name;
     private Class _class;
     private WorkflowInterface _workflow;
+
+    private String _testPath;
+    private WorkflowPlatform _platform;
     private WorkflowParams _params;
+    
+    // Results from running the workflow
     private FlowResult _result;
     private Exception _failure;
-    private WorkflowPlatform _platform;
     
     public WorkflowContext(String name, Class clazz) {
     	_name = name;
@@ -82,7 +91,10 @@ public class WorkflowContext {
         return new WorkflowParams(_params);
     }
     
-    public void addResult(FlowResult result) {
+	public WorkflowParams getParams() {
+		return _params;
+	}
+   public void addResult(FlowResult result) {
         _result = result;
     }
     
@@ -102,6 +114,10 @@ public class WorkflowContext {
         _params.put(paramName, paramValue);
     }
 
+    private void resetParameters() {
+        _params.reset();
+	}
+    
     public void addFailure(Exception e) {
         _failure = e;
     }
@@ -138,4 +154,13 @@ public class WorkflowContext {
     public WorkflowPlatform getDefaultPlatform() {
         return _platform;
     }
+
+	public void setTestDir(String testPath) {
+		_testPath = testPath;
+	}
+
+	public String getTestDir() {
+		return _testPath;
+	}
+
 }
