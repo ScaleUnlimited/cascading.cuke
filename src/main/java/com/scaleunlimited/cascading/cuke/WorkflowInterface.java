@@ -4,6 +4,7 @@ import java.util.Map;
 
 import cascading.flow.Flow;
 import cascading.tuple.Tuple;
+import cascading.tuple.TupleEntry;
 import cascading.tuple.TupleEntryCollector;
 import cascading.tuple.TupleEntryIterator;
 
@@ -19,4 +20,6 @@ public interface WorkflowInterface {
     public TupleEntryCollector openBinaryForWrite(WorkflowContext context, String path, String recordName) throws Throwable;
     
     public TupleEntryCollector openTextForWrite(WorkflowContext context, String path) throws Throwable;
+
+    public boolean tupleFieldMatchesTarget(TupleEntry te, String field, String value);
 }
