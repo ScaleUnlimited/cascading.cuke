@@ -11,23 +11,20 @@ import org.apache.commons.io.FileUtils;
 
 import cascading.flow.Flow;
 import cascading.flow.hadoop.HadoopFlowProcess;
-import cascading.flow.local.LocalFlowProcess;
 import cascading.flow.planner.PlannerException;
 import cascading.tap.SinkMode;
 import cascading.tap.Tap;
 import cascading.tap.hadoop.Hfs;
-import cascading.tap.local.FileTap;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.tuple.TupleEntryCollector;
 import cascading.tuple.TupleEntryIterator;
-
-import com.scaleunlimited.cascading.FlowResult;
-import com.scaleunlimited.cascading.FlowRunner;
-
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+
+import com.scaleunlimited.cascading.FlowResult;
+import com.scaleunlimited.cascading.FlowRunner;
 
 @SuppressWarnings("unchecked")
 public class WorkFlowStepDefinitions {
@@ -204,6 +201,25 @@ public class WorkFlowStepDefinitions {
         throw new AssertionError(String.format("No record found for workflow %s in results \"%s\" that matched the target value", 
         		WorkflowContext.getCurrentWorkflowName(), directoryName));
     }
+
+    @Then("^the workflow \"(.*?)\" (?:result|results|output|file|directory) should have no records$")
+    public void the_workflow__xxx_results_should_have_no_records(String directoryName) throws Throwable {
+    	WorkflowContext context = WorkflowContext.getCurrentContext();
+        WorkflowInterface workflow = context.getWorkflow();
+        TupleEntryIterator iter = null;
+        try {
+            iter = workflow.openBinaryForRead(context, directoryName);
+        } catch (IllegalArgumentException e) {
+            if(!e.getMessage().startsWith("Path provided doesn't exist:")) {
+                throw new AssertionError(e);
+            }
+        }
+
+        if (iter != null && iter.hasNext()) {
+            throw new AssertionError(String.format("Record(s) found for workflow %s in results \"%s\"",
+                WorkflowContext.getCurrentWorkflowName(), directoryName));
+        }
+    }
     
     @Then("^the workflow \"(.*?)\" (?:result|results|output|file) should have records where:$")
     public void the_workflow_results_should_have_records_where(String directoryName, List<Map<String, String>> targetValues) throws Throwable {
@@ -349,12 +365,10 @@ public class WorkFlowStepDefinitions {
 	}
 
     private boolean tupleMatchesTarget(TupleEntry te, Map<String, String> targetValues) {
+        String workflowName = WorkflowContext.getCurrentWorkflowName();
+        WorkflowInterface wi = WorkflowContext.getContext(workflowName).getWorkflow();
         for (String fieldName : targetValues.keySet()) {
-            String tupleValue = te.getString(fieldName);
-            String targetValue = targetValues.get(fieldName);
-            if ((tupleValue == null) && !targetValue.equals("null")) {
-                return false;
-            } else if ((tupleValue != null) && !tupleValue.equals(targetValue)) {
+            if(!wi.tupleFieldMatchesTarget(te, fieldName, targetValues.get(fieldName))) {
                 return false;
             }
         }
