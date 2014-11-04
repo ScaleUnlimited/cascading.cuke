@@ -89,7 +89,7 @@ public class WorkFlowStepDefinitions {
         }
     }
 
-	private String expandMacros(WorkflowContext context, String s) {
+	protected String expandMacros(WorkflowContext context, String s) {
 		return s.replaceAll("\\$\\{testdir\\}", context.getTestDir());
 	}
 
