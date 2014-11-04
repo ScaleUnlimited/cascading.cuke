@@ -21,5 +21,6 @@ public interface WorkflowInterface {
     
     public TupleEntryCollector openTextForWrite(WorkflowContext context, String path) throws Throwable;
 
-    public boolean tupleFieldMatchesTarget(TupleEntry te, String field, String value);
+    // returns null if tupleField matches target value, or the type of TupleMatchFailure.
+    public TupleMatchFailure tupleFieldMatchesTarget(TupleEntry te, String field, String value);
 }

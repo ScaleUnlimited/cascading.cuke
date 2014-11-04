@@ -52,14 +52,16 @@ public class WorkflowUtils {
         }
 	}
 
-    public static boolean tupleFieldMatchesTarget(TupleEntry te, String fieldName, String targetValue) {
+    public static TupleMatchFailure tupleFieldMatchesTarget(TupleEntry te, String fieldName, String expected) {
         String tupleValue = te.getString(fieldName);
-        if ((tupleValue == null) && !targetValue.equals("null")) {
-            return false;
-        } else if ((tupleValue != null) && !tupleValue.equals(targetValue)) {
-            return false;
+        if ((tupleValue == null) && !expected.equals("null")) {
+            return TupleMatchFailure.MISSING;
+        } else if ((tupleValue != null) && expected.equals("null")) {
+            return TupleMatchFailure.NULL_EXPECTED;
+        } else if ((tupleValue != null) && !tupleValue.equals(expected)) {
+            return TupleMatchFailure.NOT_EQUAL;
         }
-        return true;
+        return null;
     }
 
 }

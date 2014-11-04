@@ -3,13 +3,17 @@ package com.scaleunlimited.cascading.cuke;
 import java.util.HashMap;
 import java.util.Map;
 
+import cucumber.api.Scenario;
+import cucumber.api.java.After;
+import cucumber.api.java.Before;
+
 import com.scaleunlimited.cascading.FlowResult;
 
 public class WorkflowContext {
     
     private static Map<String, WorkflowContext> WORKFLOW_CONTEXTS = new HashMap<String, WorkflowContext>();
     private static String CURRENT_WORKFLOW = null;
-    
+
     public static String getCurrentWorkflowName() {
         String workflowName = CURRENT_WORKFLOW;
         if (workflowName == null) {
@@ -74,27 +78,46 @@ public class WorkflowContext {
 
     private String _testPath;
     private WorkflowPlatform _platform;
-    private WorkflowParams _params;
-    
+    private Map<String, WorkflowParams> _params;
+    private WorkflowParams _backgroundParams;
+    private Scenario _scenario;
+
     // Results from running the workflow
     private FlowResult _result;
     private Exception _failure;
-    
-    public WorkflowContext(String name, Class clazz) {
-    	_name = name;
-        _class = clazz;
-        _params = new WorkflowParams();
+
+    public WorkflowContext() {
+        _backgroundParams = new WorkflowParams();
+        _params = new HashMap<>();
         _platform = WorkflowPlatform.LOCAL;
     }
-    
+
+    public WorkflowContext(String name, Class clazz) {
+        this();
+    	_name = name;
+        _class = clazz;
+    }
+
+
+    @Before
+    public void beforeScenario(Scenario scenario) {
+        _scenario = scenario;
+        _params.put(_scenario.getId(), new WorkflowParams(_backgroundParams));
+    }
+
+    @After
+    public void afterScenario() {
+    }
+
     public WorkflowParams getParamsCopy() {
-        return new WorkflowParams(_params);
+        return new WorkflowParams(getParams());
     }
     
 	public WorkflowParams getParams() {
-		return _params;
+		return _scenario == null ? _backgroundParams : _params.get(_scenario.getId());
 	}
-   public void addResult(FlowResult result) {
+
+    public void addResult(FlowResult result) {
         _result = result;
     }
     
@@ -111,11 +134,14 @@ public class WorkflowContext {
     }
     
     public void addParameter(String paramName, String paramValue) {
-        _params.put(paramName, paramValue);
+        getParams().put(paramName, paramValue);
     }
 
-    private void resetParameters() {
-        _params.reset();
+    public void resetParameters() {
+        final WorkflowParams params = getParams();
+        if (params == _backgroundParams) return;
+        params.reset();
+        params.putAll(_backgroundParams);
 	}
     
     public void addFailure(Exception e) {

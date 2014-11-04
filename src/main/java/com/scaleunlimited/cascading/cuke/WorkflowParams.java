@@ -19,6 +19,10 @@ public class WorkflowParams {
     public void put(String paramName, String paramValue) {
         _params.put(paramName, paramValue);
     }
+
+    public void putAll(WorkflowParams source) {
+        _params.putAll(source._params);
+    }
     
     public String get(String paramName) {
         String paramValue = _params.get(paramName);
@@ -59,7 +63,7 @@ public class WorkflowParams {
         return _params.toString();
     }
 
-	public void reset() {
+	protected void reset() {
 		_params.clear();
 	}
 
