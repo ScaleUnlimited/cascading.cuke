@@ -60,13 +60,14 @@ Feature: Count words
             | word2 word2 |
             
         # You can add additional parameters beyond what is set up in the background.
-        # You can also change the value of an existing parameter.
-        And the workflow parameter "mincount" is "2"
-        When the workflow is run
+        # Using this version, the parameters only change this scenario's run
+        # You can add new parameters, and also change the value of an existing parameter.
+        When the workflow is run with these additional parameters:
+			| mincount | 2 |
 
        	# You can test for exact results. Note the format here is to have a header line,
        	# with a list of field names, and then one row per record.
-        And the workflow "output" result should only have records where:
+        Then the workflow "output" result should only have records where:
         	| word | count |
         	| word1 | 2 |
         	| word2 | 2 |
@@ -117,7 +118,7 @@ Feature: Count words
         
         # Note that we set the output of the WordCountTool to an explicit directory.
         And the workflow parameter "output" is "build/test/WordCountTool/input_for_LetterCount"
-        And the workflow is run
+        When the workflow is run
         Then the workflow "output" result should only have records where:
         	| word | count |
         	| abc | 2 |

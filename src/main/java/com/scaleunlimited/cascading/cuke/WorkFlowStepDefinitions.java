@@ -409,7 +409,7 @@ public class WorkFlowStepDefinitions {
 	}
 
     private Map<String, TupleMatchFailure> tupleMatchesTarget(TupleEntry te, Map<String, String> targetValues) {
-        Map<String, TupleMatchFailure> matchFailures = new LinkedHashMap<>(5);
+        Map<String, TupleMatchFailure> matchFailures = new LinkedHashMap<String, TupleMatchFailure>(5);
         String workflowName = WorkflowContext.getCurrentWorkflowName();
         WorkflowInterface wi = WorkflowContext.getContext(workflowName).getWorkflow();
         for (String fieldName : targetValues.keySet()) {

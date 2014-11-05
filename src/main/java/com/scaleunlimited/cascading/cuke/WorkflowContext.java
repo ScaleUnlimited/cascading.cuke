@@ -88,7 +88,7 @@ public class WorkflowContext {
 
     public WorkflowContext() {
         _backgroundParams = new WorkflowParams();
-        _params = new HashMap<>();
+        _params = new HashMap<String, WorkflowParams>();
         _platform = WorkflowPlatform.LOCAL;
     }
 
