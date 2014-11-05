@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import cucumber.api.Scenario;
-import cucumber.api.java.After;
-import cucumber.api.java.Before;
 
 import com.scaleunlimited.cascading.FlowResult;
 
@@ -13,6 +11,7 @@ public class WorkflowContext {
     
     private static Map<String, WorkflowContext> WORKFLOW_CONTEXTS = new HashMap<String, WorkflowContext>();
     private static String CURRENT_WORKFLOW = null;
+    private static Scenario CURRENT_SCENARIO = null;
 
     public static String getCurrentWorkflowName() {
         String workflowName = CURRENT_WORKFLOW;
@@ -62,7 +61,7 @@ public class WorkflowContext {
             WORKFLOW_CONTEXTS.put(workflowName, context);
         } else if (context.getWorkflowClass().equals(clazz)) {
             // Ignore duplicate registration - just clear out parameters
-        	context.resetParameters();
+        	context.resetParameters(null);
         } else {
             throw new IllegalStateException(String.format(   "The workflow name %s has already been registered with class %s", 
                                                             workflowName, 
@@ -71,6 +70,15 @@ public class WorkflowContext {
 
         CURRENT_WORKFLOW = workflowName;
     }
+
+    public static void setCurrentScenario(Scenario scenario) {
+        CURRENT_SCENARIO = scenario;
+        if (CURRENT_WORKFLOW == null) return;
+        final WorkflowContext currentContext = getCurrentContext();
+        if(!currentContext._params.containsKey(CURRENT_SCENARIO)) {
+            currentContext._params.put(CURRENT_SCENARIO, new WorkflowParams());
+        }
+    }
     
 	private String _name;
     private Class _class;
@@ -78,43 +86,31 @@ public class WorkflowContext {
 
     private String _testPath;
     private WorkflowPlatform _platform;
-    private Map<String, WorkflowParams> _params;
-    private WorkflowParams _backgroundParams;
-    private Scenario _scenario;
+    private Map<Scenario, WorkflowParams> _params;
+//    private WorkflowParams _backgroundParams;
 
     // Results from running the workflow
     private FlowResult _result;
     private Exception _failure;
 
-    public WorkflowContext() {
-        _backgroundParams = new WorkflowParams();
-        _params = new HashMap<String, WorkflowParams>();
-        _platform = WorkflowPlatform.LOCAL;
-    }
-
     public WorkflowContext(String name, Class clazz) {
-        this();
+        _params = new HashMap<Scenario, WorkflowParams>();
+        _platform = WorkflowPlatform.LOCAL;
     	_name = name;
         _class = clazz;
-    }
-
-
-    @Before
-    public void beforeScenario(Scenario scenario) {
-        _scenario = scenario;
-        _params.put(_scenario.getId(), new WorkflowParams(_backgroundParams));
-    }
-
-    @After
-    public void afterScenario() {
     }
 
     public WorkflowParams getParamsCopy() {
         return new WorkflowParams(getParams());
     }
     
-	public WorkflowParams getParams() {
-		return _scenario == null ? _backgroundParams : _params.get(_scenario.getId());
+	public synchronized WorkflowParams getParams() {
+        WorkflowParams params = _params.get(CURRENT_SCENARIO);
+        if (params == null) {
+            params = new WorkflowParams();
+            _params.put(CURRENT_SCENARIO, params);
+        }
+        return params;
 	}
 
     public void addResult(FlowResult result) {
@@ -137,11 +133,13 @@ public class WorkflowContext {
         getParams().put(paramName, paramValue);
     }
 
-    public void resetParameters() {
-        final WorkflowParams params = getParams();
-        if (params == _backgroundParams) return;
-        params.reset();
-        params.putAll(_backgroundParams);
+    public void resetParameters(WorkflowParams reset) {
+        if(reset != null) {
+            _params.put(CURRENT_SCENARIO, reset);
+        } else {
+            final WorkflowParams params = getParams();
+            params.reset();
+        }
 	}
     
     public void addFailure(Exception e) {

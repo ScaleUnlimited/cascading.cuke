@@ -123,7 +123,6 @@ public class WorkFlowStepDefinitions {
     @When("^the workflow is run$")
     public void the_workflow_is_run() throws Throwable {
     	WorkflowContext context = WorkflowContext.getCurrentContext();
-        context.resetParameters();  // ensure params set from previous workflow invocations (but same scenario) are reset
 
         WorkflowInterface workflow = context.getWorkflow();
     	Flow flow = workflow.createFlow(context);
@@ -135,7 +134,7 @@ public class WorkFlowStepDefinitions {
     @When("^the workflow is run with these additional parameters:$")
     public void the_workflow_is_run_with_these_additional_parameters(List<List<String>> parameters) throws Throwable {
         WorkflowContext context = WorkflowContext.getCurrentContext();
-        context.resetParameters();  // ensure params set from previous workflow invocations (but same scenario) are reset
+        WorkflowParams before = context.getParams();
 
         // We get one entry (list) for each row, with the first element being the
         // parameter name, and the second element being the parameter value.
@@ -152,6 +151,8 @@ public class WorkFlowStepDefinitions {
         Flow flow = workflow.createFlow(context);
         FlowResult result = FlowRunner.run(flow);
         context.addResult(result);
+
+        context.resetParameters(before);
     }
 
     @Then("^the workflow should fail$")

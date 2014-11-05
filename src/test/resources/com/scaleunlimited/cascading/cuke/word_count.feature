@@ -145,7 +145,7 @@ Feature: Count words
 		And these parameters for the workflow:
 			| input | ${testdir}/input |
 			| output | ${testdir}/output |
-	
+
 		# We're creating input data, where we're specifying the fields and values for
 		# a list of records (tuples).
 		And these "word count" records in the workflow "input" directory:

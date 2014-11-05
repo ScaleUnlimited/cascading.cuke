@@ -6,9 +6,6 @@ import java.util.Map;
 import cascading.flow.Flow;
 import cascading.flow.FlowConnector;
 import cascading.flow.FlowDef;
-import cascading.flow.FlowProcess;
-import cascading.flow.hadoop.HadoopFlowProcess;
-import cascading.flow.local.LocalFlowProcess;
 import cascading.operation.expression.ExpressionFilter;
 import cascading.operation.regex.RegexGenerator;
 import cascading.operation.state.Counter;
@@ -26,9 +23,7 @@ import cascading.tuple.TupleEntryIterator;
 
 import com.scaleunlimited.cascading.BasePath;
 import com.scaleunlimited.cascading.BasePlatform;
-import com.scaleunlimited.cascading.hadoop.HadoopPlatform;
 import com.scaleunlimited.cascading.local.KryoScheme;
-import com.scaleunlimited.cascading.local.LocalPlatform;
 
 public class WordCountTool extends BaseTool implements WorkflowInterface {
 
