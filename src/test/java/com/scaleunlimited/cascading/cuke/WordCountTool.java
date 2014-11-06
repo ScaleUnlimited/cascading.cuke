@@ -7,6 +7,7 @@ import cascading.flow.Flow;
 import cascading.flow.FlowConnector;
 import cascading.flow.FlowDef;
 import cascading.operation.expression.ExpressionFilter;
+import cascading.operation.expression.ExpressionFunction;
 import cascading.operation.regex.RegexGenerator;
 import cascading.operation.state.Counter;
 import cascading.pipe.Each;
@@ -77,6 +78,7 @@ public class WordCountTool extends BaseTool implements WorkflowInterface {
                 new Fields("line"), 
                 new RegexGenerator( new Fields("word"),
                         WORD_BREAK_PATTERN_STRING));
+        wordPipe = new Each(wordPipe, new Fields("word"), new ExpressionFunction(new Fields("word"), "$0.toLowerCase()", String.class), Fields.REPLACE);
         wordPipe = new Each(wordPipe, new Counter(WordCountCounters.WORDS));
         wordPipe = new CountBy(wordPipe, new Fields("word"), new Fields("count"));
         wordPipe = new Each(wordPipe, new Fields("count"), new ExpressionFilter(String.format("$0 < %d", minCount), Integer.class));
