@@ -2,6 +2,8 @@ package com.scaleunlimited.cascading.cuke;
 
 import java.io.IOException;
 
+import org.apache.hadoop.fs.PathNotFoundException;
+
 import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.flow.local.LocalFlowProcess;
 import cascading.tap.SinkMode;
@@ -38,13 +40,13 @@ public class WorkflowUtils {
         if (platform == WorkflowPlatform.DISTRIBUTED) {
             Tap tap = new Hfs(new cascading.scheme.hadoop.SequenceFile(fields), readPath);
             if (!tap.resourceExists(new HadoopFlowProcess())) {
-                throw new IllegalArgumentException(String.format("The Hadoop path \"%s\" doesn't exist", readPath));
+                throw new PathNotFoundException(String.format("The Hadoop path \"%s\" doesn't exist", readPath));
             }
             return tap.openForRead(new HadoopFlowProcess());
         } else if (platform == WorkflowPlatform.LOCAL) {
             Tap tap = new FileTap(new KryoScheme(fields), readPath);
             if (!tap.resourceExists(new LocalFlowProcess())) {
-                throw new IllegalArgumentException(String.format("The local path \"%s\" doesn't exist", readPath));
+                throw new PathNotFoundException(String.format("The local path \"%s\" doesn't exist", readPath));
             }
             return tap.openForRead(new LocalFlowProcess());
         } else {
@@ -52,14 +54,14 @@ public class WorkflowUtils {
         }
 	}
 
-    public static TupleMatchFailure tupleFieldMatchesTarget(TupleEntry te, String fieldName, String expected) {
+    public static TupleDiff diffTupleAndTarget(TupleEntry te, String fieldName, String expected) {
         String tupleValue = te.getString(fieldName);
         if ((tupleValue == null) && !expected.equals("null")) {
-            return TupleMatchFailure.MISSING;
+            return new TupleDiff(fieldName, expected, tupleValue, TupleDiff.Type.MISSING);
         } else if ((tupleValue != null) && expected.equals("null")) {
-            return TupleMatchFailure.NULL_EXPECTED;
+            return new TupleDiff(fieldName, expected, tupleValue, TupleDiff.Type.NULL_EXPECTED);
         } else if ((tupleValue != null) && !tupleValue.equals(expected)) {
-            return TupleMatchFailure.NOT_EQUAL;
+            return new TupleDiff(fieldName, expected, tupleValue, TupleDiff.Type.NOT_EQUAL);
         }
         return null;
     }

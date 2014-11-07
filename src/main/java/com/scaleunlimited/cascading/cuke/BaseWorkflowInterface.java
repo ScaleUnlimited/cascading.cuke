@@ -8,8 +8,8 @@ import cascading.tuple.TupleEntryCollector;
 import cascading.tuple.TupleEntryIterator;
 
 public abstract class BaseWorkflowInterface implements WorkflowInterface {
-    @Override public TupleMatchFailure tupleFieldMatchesTarget(TupleEntry te, String field, String value) {
-        return WorkflowUtils.tupleFieldMatchesTarget(te, field, value);
+    @Override public TupleDiff diffTupleAndTarget(TupleEntry te, String field, String value) {
+        return WorkflowUtils.diffTupleAndTarget(te, field, value);
     }
 
     @Override public Tuple createTuple(WorkflowContext context, String recordName, Map<String, String> tupleValues) throws Throwable {
