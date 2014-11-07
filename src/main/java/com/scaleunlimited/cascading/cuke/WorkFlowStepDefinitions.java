@@ -3,12 +3,15 @@ package com.scaleunlimited.cascading.cuke;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.fs.PathNotFoundException;
 
 import cascading.flow.Flow;
 import cascading.flow.hadoop.HadoopFlowProcess;
@@ -20,6 +23,7 @@ import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.tuple.TupleEntryCollector;
 import cascading.tuple.TupleEntryIterator;
+import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
@@ -212,14 +216,14 @@ public class WorkFlowStepDefinitions {
     }
 
     @Then("^the workflow \"(.*?)\" (?:result|results|output|file|directory) should have a record where:$")
-    public void the_workflow__xxx_results_should_have_a_record_where(String directoryName, List<List<String>> targetValues) throws Throwable {
+    public void the_workflow__xxx_results_should_have_a_record_where(String directoryName, DataTable targetValues) throws Throwable {
     	WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
         TupleEntryIterator iter = workflow.openBinaryForRead(context, directoryName);
 
         while (iter.hasNext()) {
             TupleEntry te = iter.next();
-            if (tupleMatchesTarget(te, targetValues)) {
+            if (tupleMatchesTarget(workflow, te, targetValues.asMap(String.class, String.class))) {
                 return;
             }
         }
@@ -235,10 +239,7 @@ public class WorkFlowStepDefinitions {
         TupleEntryIterator iter = null;
         try {
             iter = workflow.openBinaryForRead(context, directoryName);
-        } catch (IllegalArgumentException e) {
-            if(!e.getMessage().startsWith("Path provided doesn't exist:")) {
-                throw new AssertionError(e);
-            }
+        } catch (PathNotFoundException e) {
         }
         int records = 0;
         if (iter != null) {
@@ -253,17 +254,17 @@ public class WorkFlowStepDefinitions {
     }
 
     @Then("^the workflow \"(.*?)\" (?:result|results|output|file) should have records where:$")
-    public void the_workflow_results_should_have_records_where(String directoryName, List<Map<String, String>> targetValues) throws Throwable {
+    public void the_workflow_results_should_have_records_where(String directoryName, DataTable targetValues) throws Throwable {
     	matchResults(directoryName, targetValues, true);
     }
 
 	@Then("^the workflow \"(.*?)\" (?:result|results|output|file) should only have records where:$")
-    public void the_workflow_result_should_only_have_records_where(String directoryName, List<Map<String, String>> targetValues) throws Throwable {
+    public void the_workflow_result_should_only_have_records_where(String directoryName, DataTable targetValues) throws Throwable {
     	matchResults(directoryName, targetValues, false);
     }
 
 	@Then("^the workflow \"(.*?)\" (?:result|results|output|file) should not have records where:$")
-	public void the_workflow_xxx_result_should_not_have_records_where(String directoryName, List<Map<String, String>> excludedValues) throws Throwable {
+	public void the_workflow_xxx_result_should_not_have_records_where(String directoryName, DataTable excludedValues) throws Throwable {
 	    dontMatchResults(directoryName, excludedValues);
 	}
 
@@ -340,10 +341,10 @@ public class WorkFlowStepDefinitions {
     	}
 	}
 
-	private void matchResults(String directoryName, List<Map<String, String>> targetValues, boolean allowUnmatchedResults) throws Throwable  {
+    protected void matchResults(String directoryName, DataTable targetValues, boolean allowUnmatchedResults) throws Throwable  {
         // For every TupleEntry, see if we have a match with one of our target records.
         // If so, remove its index from the list, and make sure the list is empty when we're done.
-        List<Map<String, String>> remainingValues = new ArrayList<Map<String,String>>(targetValues);
+        List<Map<String, String>> remainingValues = new ArrayList<Map<String,String>>(targetValues.asMaps(String.class, String.class));
 
         WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
@@ -352,17 +353,17 @@ public class WorkFlowStepDefinitions {
             TupleEntry te = iter.next();
 
             boolean foundMatch = false;
-            int leastFailures = Integer.MAX_VALUE;
-            Map<String, TupleMatchFailure> leastFailuresMap = null;
+            int leastDiffs = Integer.MAX_VALUE;
+            Set<TupleDiff> leastDiffsSet = null;
 
             for (int i = 0; i < remainingValues.size() && !foundMatch; i++) {
                 Map<String, String> row = remainingValues.get(i);
-                Map<String, TupleMatchFailure> tupleMatchFailures = tupleMatchesTarget(te, row);
-                if(tupleMatchFailures.size() < leastFailures) {
-                    leastFailures = tupleMatchFailures.size();
-                    leastFailuresMap = tupleMatchFailures;
+                Set<TupleDiff> tupleDiffs = diffTupleAndTarget(workflow, te, row);
+                if(tupleDiffs.size() < leastDiffs) {
+                    leastDiffs = tupleDiffs.size();
+                    leastDiffsSet = tupleDiffs;
                 }
-                if (tupleMatchFailures.size() == 0) {
+                if (tupleDiffs.size() == 0) {
                     foundMatch = true;
                     remainingValues.remove(i);
                 }
@@ -375,8 +376,8 @@ public class WorkFlowStepDefinitions {
                     context.getWorkflowName(),
                     directoryName));
                 sb.append("\n");
-                for (Map.Entry<String, TupleMatchFailure> e: leastFailuresMap.entrySet()) {
-                    sb.append("Field: " + e.getKey() + "  Failure: " + e.getValue()).append("\n");
+                for (TupleDiff diff: leastDiffsSet) {
+                    sb.append(diff.toString()).append("\n");
                 }
                 throw new AssertionError(sb.toString());
             }
@@ -390,16 +391,16 @@ public class WorkFlowStepDefinitions {
         }
 	}
 
-    private void dontMatchResults(String directoryName, List<Map<String, String>> excludedValues) throws Throwable  {
+    protected void dontMatchResults(String directoryName, DataTable excludedValues) throws Throwable  {
         WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
         TupleEntryIterator iter = workflow.openBinaryForRead(context, directoryName);
+        List<Map<String, String>> excludedValuesMap = excludedValues.asMaps(String.class, String.class);
         while (iter.hasNext()) {
             TupleEntry te = iter.next();
 
-            for (int i = 0; i < excludedValues.size(); i++) {
-                Map<String, String> excludedValue = excludedValues.get(i);
-                if (tupleMatchesTarget(te, excludedValue).size() == 0) {
+            for (Map<String, String> row: excludedValuesMap) {
+                if (tupleMatchesTarget(workflow, te, row)) {
                     throw new AssertionError(String.format("Record \"%s\" found for workflow %s in results \"%s\" that was in the excluded list",
                     		te,
                             context.getWorkflowName(),
@@ -409,29 +410,42 @@ public class WorkFlowStepDefinitions {
         }
 	}
 
-    private Map<String, TupleMatchFailure> tupleMatchesTarget(TupleEntry te, Map<String, String> targetValues) {
-        Map<String, TupleMatchFailure> matchFailures = new LinkedHashMap<String, TupleMatchFailure>(5);
-        String workflowName = WorkflowContext.getCurrentWorkflowName();
-        WorkflowInterface wi = WorkflowContext.getContext(workflowName).getWorkflow();
-        for (String fieldName : targetValues.keySet()) {
-            final TupleMatchFailure matchFailure = wi.tupleFieldMatchesTarget(te, fieldName, targetValues.get(fieldName));
-            if(matchFailure != null) {
-                matchFailures.put(fieldName, matchFailure);
-            }
-        }
-
-        return matchFailures;
+    protected boolean tupleMatchesTarget(WorkflowInterface workflow, TupleEntry te, Map<String, String> targetValues) {
+        return diffTupleAndTarget(workflow, te, targetValues).size() == 0;
     }
 
-    private boolean tupleMatchesTarget(TupleEntry te, List<List<String>> targetValues) {
-        for (List<String> fieldAndValue : targetValues) {
-            String tupleValue = te.getString(fieldAndValue.get(0));
-            if ((tupleValue != null) && tupleValue.equals(fieldAndValue.get(1))) {
-                return true;
+    protected Set<TupleDiff> diffTupleAndTarget(WorkflowInterface workflow, TupleEntry te, Map<String, String> targetValues) {
+        return diffTupleAndTarget(workflow, te, targetValues, false);
+    }
+
+        /**
+         * @param workflow     workflow
+         * @param te           source
+         * @param targetValues target
+         * @param reportAdditionalColumns should TupleDiff.ADDITIONAL be reported?
+         * @return
+         */
+    protected Set<TupleDiff> diffTupleAndTarget(WorkflowInterface workflow, TupleEntry te, Map<String, String> targetValues, boolean reportAdditionalColumns) {
+        Set<TupleDiff> diffs = new LinkedHashSet<TupleDiff>();
+        for (Map.Entry<String, String> entry : targetValues.entrySet()) {
+            String fieldName = entry.getKey();
+            final TupleDiff diff = workflow.diffTupleAndTarget(te, fieldName, entry.getValue());
+            if(diff != null) {
+                diffs.add(diff);
             }
         }
 
-        return false;
+        if(reportAdditionalColumns) {
+            for (Iterator it = te.getFields().iterator(); it.hasNext(); ) {
+                String field = (String) it.next();
+                final String actual = te.getString(field);
+                if (actual != null && !targetValues.containsKey(field)) {
+                    diffs.add(new TupleDiff(field, null, actual, TupleDiff.Type.ADDITIONAL));
+                }
+            }
+        }
+
+        return diffs;
     }
 
     private WorkflowPlatform getPlatform(String workflowName, String platformName) {
