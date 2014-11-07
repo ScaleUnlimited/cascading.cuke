@@ -240,6 +240,9 @@ public class WorkFlowStepDefinitions {
         try {
             iter = workflow.openBinaryForRead(context, directoryName);
         } catch (PathNotFoundException e) {
+            // no records can mean the dir doesn't exist, or it does but contains no records
+            // openBinaryForRead throws PathNotFoundException when the dir exists,
+            // so we catch it here and don't complain since it's alright.
         }
         int records = 0;
         if (iter != null) {
