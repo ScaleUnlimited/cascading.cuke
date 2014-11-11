@@ -2,12 +2,17 @@ package com.scaleunlimited.cascading.cuke;
 
 import java.util.Map;
 
+import cascading.flow.Flow;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.tuple.TupleEntryCollector;
 import cascading.tuple.TupleEntryIterator;
 
 public abstract class BaseWorkflowInterface implements WorkflowInterface {
+    @Override public Flow createFlow(WorkflowContext context) throws Throwable {
+        throw new UnsupportedOperationException();
+    }
+
     @Override public TupleDiff diffTupleAndTarget(TupleEntry te, String field, String value) {
         return WorkflowUtils.diffTupleAndTarget(te, field, value);
     }
@@ -26,5 +31,13 @@ public abstract class BaseWorkflowInterface implements WorkflowInterface {
 
     @Override public TupleEntryCollector openTextForWrite(WorkflowContext context, String path) throws Throwable {
         throw new UnsupportedOperationException();
+    }
+
+    @Override public TupleEntryIterator openTextForRead(WorkflowContext context, String path) throws Throwable {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override public boolean isBinary(String path) {
+        return true;
     }
 }

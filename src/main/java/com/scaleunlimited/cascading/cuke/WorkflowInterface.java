@@ -16,10 +16,13 @@ public interface WorkflowInterface {
     public Tuple createTuple(WorkflowContext context, String recordName, Map<String, String> tupleValues) throws Throwable;
 
     public TupleEntryIterator openBinaryForRead(WorkflowContext context, String path) throws Throwable;
-    
     public TupleEntryCollector openBinaryForWrite(WorkflowContext context, String path, String recordName) throws Throwable;
-    
+
     public TupleEntryCollector openTextForWrite(WorkflowContext context, String path) throws Throwable;
+
+    public TupleEntryIterator openTextForRead(WorkflowContext context, String path) throws Throwable;
+
+    public boolean isBinary(String path);
 
     // returns null if tupleField matches target value, or the type of TupleDiff.
     public TupleDiff diffTupleAndTarget(TupleEntry te, String field, String value);

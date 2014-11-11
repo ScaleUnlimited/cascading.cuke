@@ -219,7 +219,7 @@ public class WorkFlowStepDefinitions {
     public void the_workflow__xxx_results_should_have_a_record_where(String directoryName, DataTable targetValues) throws Throwable {
     	WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
-        TupleEntryIterator iter = workflow.openBinaryForRead(context, directoryName);
+        TupleEntryIterator iter = openForRead(context, workflow, directoryName);
 
         while (iter.hasNext()) {
             TupleEntry te = iter.next();
@@ -232,13 +232,17 @@ public class WorkFlowStepDefinitions {
         		WorkflowContext.getCurrentWorkflowName(), directoryName));
     }
 
+    private TupleEntryIterator openForRead(WorkflowContext context, WorkflowInterface workflow, String directoryName) throws Throwable {
+        return workflow.isBinary(directoryName) ? workflow.openBinaryForRead(context, directoryName) : workflow.openTextForRead(context, directoryName);
+    }
+
     @Then("^the workflow \"(.*?)\" (?:result|results|output|file|directory) should have no records$")
     public void the_workflow__xxx_results_should_have_no_records(String directoryName) throws Throwable {
     	WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
         TupleEntryIterator iter = null;
         try {
-            iter = workflow.openBinaryForRead(context, directoryName);
+            iter = openForRead(context, workflow, directoryName);
         } catch (PathNotFoundException e) {
             // no records can mean the dir doesn't exist, or it does but contains no records
             // openBinaryForRead throws PathNotFoundException when the dir exists,
@@ -351,7 +355,7 @@ public class WorkFlowStepDefinitions {
 
         WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
-        TupleEntryIterator iter = workflow.openBinaryForRead(context, directoryName);
+        TupleEntryIterator iter = openForRead(context, workflow, directoryName);
         while (iter.hasNext()) {
             TupleEntry te = iter.next();
 
@@ -397,7 +401,7 @@ public class WorkFlowStepDefinitions {
     protected void dontMatchResults(String directoryName, DataTable excludedValues) throws Throwable  {
         WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
-        TupleEntryIterator iter = workflow.openBinaryForRead(context, directoryName);
+        TupleEntryIterator iter = openForRead(context, workflow, directoryName);
         List<Map<String, String>> excludedValuesMap = excludedValues.asMaps(String.class, String.class);
         while (iter.hasNext()) {
             TupleEntry te = iter.next();
