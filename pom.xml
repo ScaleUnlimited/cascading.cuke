@@ -7,8 +7,8 @@
 	<artifactId>cascading.cuke</artifactId>
 	<name>Cascading Harness for Cucumber</name>
 	<packaging>jar</packaging>
-	<version>0.1.6</version>
-	<description>Cascading Harness for conducting Cucumber-based "behaviour driven development"</description>
+	<version>1.0-SNAPSHOT</version>
+	<description>Cascading support for Cucumber-based "behaviour driven development"</description>
 	<url>http://github.com/ScaleUnlimited/cascading.cuke</url>
 	<issueManagement>
 		<system>GitHub</system>
