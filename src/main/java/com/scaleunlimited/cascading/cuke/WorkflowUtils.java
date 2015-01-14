@@ -1,6 +1,12 @@
 package com.scaleunlimited.cascading.cuke;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.fs.PathNotFoundException;
 
@@ -17,6 +23,8 @@ import cascading.tuple.TupleEntryIterator;
 
 import com.google.common.base.CaseFormat;
 import com.scaleunlimited.cascading.local.KryoScheme;
+
+import cucumber.api.DataTable;
 
 public class WorkflowUtils {
 
@@ -110,6 +118,171 @@ public class WorkflowUtils {
             return new TupleDiff(fieldName, expected, tupleValue, TupleDiff.Type.NOT_EQUAL);
         }
         return null;
+    }
+
+    public static void checkCounter(String targetCounterName, long minValue, long maxValue) {
+        Long counterValue = null;
+        String matchedCounterName = null;
+        Map<String, Long> counters = WorkflowContext.getCurrentContext().getCounters();
+        for (String counterName : counters.keySet()) {
+            if (counterName.equals(targetCounterName) || counterName.endsWith("." + targetCounterName)) {
+                if (matchedCounterName != null) {
+                    throw new AssertionError(String.format("Counter \"%s\" for workflow %s has multiple matches: \"%s\" and \"%s\"",
+                            targetCounterName,
+                            WorkflowContext.getCurrentWorkflowName(),
+                            matchedCounterName,
+                            counterName));
+
+                }
+
+                matchedCounterName = counterName;
+                counterValue = counters.get(counterName);
+            }
+        }
+
+        // If we can't find the counter, then it has an implicit value of 0
+        if (counterValue == null) {
+            counterValue = 0L;
+        }
+
+        if (counterValue < minValue) {
+            throw new AssertionError(String.format("Counter \"%s\" for workflow %s is too small, was %d, must be at least %d",
+                    targetCounterName,
+                    WorkflowContext.getCurrentWorkflowName(),
+                    counterValue,
+                    minValue));
+        } else if (counterValue > maxValue) {
+            throw new AssertionError(String.format("Counter \"%s\" for workflow %s is too bog, was %d, must be no more than %d",
+                    targetCounterName,
+                    WorkflowContext.getCurrentWorkflowName(),
+                    counterValue,
+                    maxValue));
+        }
+    }
+
+    public static void matchResults(String directoryName, DataTable targetValues, boolean allowUnmatchedResults) throws Throwable  {
+        // For every TupleEntry, see if we have a match with one of our target records.
+        // If so, remove its index from the list, and make sure the list is empty when we're done.
+        List<Map<String, String>> remainingValues = new ArrayList<Map<String,String>>(targetValues.asMaps(String.class, String.class));
+
+        WorkflowContext context = WorkflowContext.getCurrentContext();
+        WorkflowInterface workflow = context.getWorkflow();
+        TupleEntryIterator iter = openForRead(context, workflow, directoryName);
+        while (iter.hasNext()) {
+            TupleEntry te = iter.next();
+
+            boolean foundMatch = false;
+            int leastDiffs = Integer.MAX_VALUE;
+            Set<TupleDiff> leastDiffsSet = null;
+
+            for (int i = 0; i < remainingValues.size() && !foundMatch; i++) {
+                Map<String, String> row = remainingValues.get(i);
+                Set<TupleDiff> tupleDiffs = diffTupleAndTarget(workflow, te, row);
+                if(tupleDiffs.size() < leastDiffs) {
+                    leastDiffs = tupleDiffs.size();
+                    leastDiffsSet = tupleDiffs;
+                }
+                if (tupleDiffs.size() == 0) {
+                    foundMatch = true;
+                    remainingValues.remove(i);
+                }
+            }
+
+            if (!foundMatch && !allowUnmatchedResults) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("Record \"%s\" found for workflow %s in results \"%s\" that weren't in the target list",
+                    te,
+                    context.getWorkflowName(),
+                    directoryName));
+                sb.append("\n");
+                for (TupleDiff diff: leastDiffsSet) {
+                    sb.append(diff.toString()).append("\n");
+                }
+                throw new AssertionError(sb.toString());
+            }
+        }
+
+        if (!remainingValues.isEmpty()) {
+            throw new AssertionError(String.format("No record found for workflow %s in results \"%s\" that matched the target value %s",
+                    context.getWorkflowName(),
+                    directoryName,
+                    remainingValues.get(0)));
+        }
+    }
+
+    public static void dontMatchResults(String directoryName, DataTable excludedValues) throws Throwable  {
+        WorkflowContext context = WorkflowContext.getCurrentContext();
+        WorkflowInterface workflow = context.getWorkflow();
+        TupleEntryIterator iter = openForRead(context, workflow, directoryName);
+        List<Map<String, String>> excludedValuesMap = excludedValues.asMaps(String.class, String.class);
+        while (iter.hasNext()) {
+            TupleEntry te = iter.next();
+
+            for (Map<String, String> row: excludedValuesMap) {
+                if (tupleMatchesTarget(workflow, te, row)) {
+                    throw new AssertionError(String.format("Record \"%s\" found for workflow %s in results \"%s\" that was in the excluded list",
+                            te,
+                            context.getWorkflowName(),
+                            directoryName));
+                }
+            }
+        }
+    }
+
+    public static TupleEntryIterator openForRead(WorkflowContext context, WorkflowInterface workflow, String directoryName) throws Throwable {
+        return workflow.isBinary(directoryName) ? workflow.openBinaryForRead(context, directoryName) : workflow.openTextForRead(context, directoryName);
+    }
+
+    public static boolean tupleMatchesTarget(WorkflowInterface workflow, TupleEntry te, Map<String, String> targetValues) {
+        return diffTupleAndTarget(workflow, te, targetValues).size() == 0;
+    }
+
+    public static Set<TupleDiff> diffTupleAndTarget(WorkflowInterface workflow, TupleEntry te, Map<String, String> targetValues) {
+        return diffTupleAndTarget(workflow, te, targetValues, false);
+    }
+
+        /**
+         * @param workflow     workflow
+         * @param te           source
+         * @param targetValues target
+         * @param reportAdditionalColumns should TupleDiff.ADDITIONAL be reported?
+         * @return
+         */
+    public static Set<TupleDiff> diffTupleAndTarget(WorkflowInterface workflow, TupleEntry te, Map<String, String> targetValues, boolean reportAdditionalColumns) {
+        Set<TupleDiff> diffs = new LinkedHashSet<TupleDiff>();
+        for (Map.Entry<String, String> entry : targetValues.entrySet()) {
+            String fieldName = entry.getKey();
+            final TupleDiff diff = workflow.diffTupleAndTarget(te, fieldName, entry.getValue());
+            if(diff != null) {
+                diffs.add(diff);
+            }
+        }
+
+        if(reportAdditionalColumns) {
+            for (Iterator<?> it = te.getFields().iterator(); it.hasNext(); ) {
+                String field = (String) it.next();
+                final String actual = te.getString(field);
+                if (actual != null && !targetValues.containsKey(field)) {
+                    diffs.add(new TupleDiff(field, null, actual, TupleDiff.Type.ADDITIONAL));
+                }
+            }
+        }
+
+        return diffs;
+    }
+
+    public static WorkflowPlatform getPlatform(String workflowName, String platformName) {
+        platformName = platformName.trim();
+
+        if (platformName.isEmpty()) {
+            return WorkflowContext.getContext(workflowName).getDefaultPlatform();
+        } else if (platformName.equals("locally") || platformName.equals("local")) {
+            return WorkflowPlatform.LOCAL;
+        } else if (platformName.equals("on a cluster") || platformName.equals("hdfs")) {
+            return WorkflowPlatform.DISTRIBUTED;
+        } else {
+            throw new IllegalArgumentException(String.format("The workflow platform \"%s\" is unknown", platformName));
+        }
     }
 
 }

@@ -1,14 +1,11 @@
 package com.scaleunlimited.cascading.cuke;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.fs.PathNotFoundException;
@@ -23,32 +20,28 @@ import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.tuple.TupleEntryCollector;
 import cascading.tuple.TupleEntryIterator;
+
+import com.scaleunlimited.cascading.FlowResult;
+import com.scaleunlimited.cascading.FlowRunner;
+
 import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-
-import com.scaleunlimited.cascading.FlowResult;
-import com.scaleunlimited.cascading.FlowRunner;
 
 @SuppressWarnings("unchecked")
 public class WorkFlowStepDefinitions {
 
     @Given("^the (.+) package contains the (.+) workflow$")
     public void the_package_contains_the_workflow(String packageName, String workflowName) throws Throwable {
-        Class clazz = Class.forName(packageName + "." + workflowName);
+        Class<?> clazz = Class.forName(packageName + "." + workflowName);
         WorkflowContext.registerWorkflow(workflowName, clazz);
     }
 
     @Given("^the workflow will be run (locally| on a cluster) with test directory \"(.+)\"$")
     public void the_workflow_will_be_run_xxx_with_test_directory_yyy(String platformName, String testDir) throws Throwable {
     	String workflowName = WorkflowContext.getCurrentWorkflowName();
-        WorkflowContext.getContext(workflowName).setDefaultPlatform(getPlatform(workflowName, platformName));
-
-    	// Fix up common issue with not having trailing '/'
-    	if (!testDir.endsWith("/")) {
-    		testDir = testDir + "/";
-    	}
+        WorkflowContext.getContext(workflowName).setDefaultPlatform(WorkflowUtils.getPlatform(workflowName, platformName));
 
     	WorkflowContext.getCurrentContext().setTestDir(testDir);
 
@@ -93,7 +86,7 @@ public class WorkFlowStepDefinitions {
         }
     }
 
-	protected String expandMacros(WorkflowContext context, String s) {
+	protected String expandMacros(WorkflowContext context, String s) throws IOException {
 		return s.replaceAll("\\$\\{testdir\\}", context.getTestDir());
 	}
 
@@ -138,6 +131,29 @@ public class WorkFlowStepDefinitions {
     @When("^the workflow is run with these additional parameters:$")
     public void the_workflow_is_run_with_these_additional_parameters(List<List<String>> parameters) throws Throwable {
         WorkflowContext context = WorkflowContext.getCurrentContext();
+        WorkflowParams before = addParameters(context, parameters);
+
+        WorkflowInterface workflow = context.getWorkflow();
+        Flow flow = workflow.createFlow(context);
+        FlowResult result = FlowRunner.run(flow);
+        context.addResult(result);
+
+        context.resetParameters(before);
+    }
+
+    @When("^the tool is run with these additional parameters:$")
+    public void the_tool_is_run_with_these_additional_parameters(List<List<String>> parameters) throws Throwable {
+        WorkflowContext context = WorkflowContext.getCurrentContext();
+        WorkflowParams before = addParameters(context, parameters);
+
+        // Now run the tool
+        WorkflowInterface workflow = context.getWorkflow();
+        workflow.runTool(context);
+
+        context.resetParameters(before);
+    }
+    
+    private WorkflowParams addParameters(WorkflowContext context, List<List<String>> parameters) throws IOException {
         WorkflowParams before = context.getParams();
 
         // We get one entry (list) for each row, with the first element being the
@@ -150,13 +166,8 @@ public class WorkFlowStepDefinitions {
                 throw new IllegalArgumentException("Workflow parameters must be two column format (| name | value |)");
             }
         }
-
-        WorkflowInterface workflow = context.getWorkflow();
-        Flow flow = workflow.createFlow(context);
-        FlowResult result = FlowRunner.run(flow);
-        context.addResult(result);
-
-        context.resetParameters(before);
+        
+        return before;
     }
 
     @Then("^the workflow should fail$")
@@ -190,7 +201,7 @@ public class WorkFlowStepDefinitions {
 
         // We need to create records that we write out.
         for (Map<String, String> tupleValues : sourceValues) {
-        	writer.add(workflow.createTuple(context, recordName, new HashMap<String, String>(tupleValues)));
+        	writer.add(workflow.createTuple(context, recordName, new TupleValues(tupleValues)));
         }
 
         writer.close();
@@ -209,7 +220,7 @@ public class WorkFlowStepDefinitions {
         	// We have to clone, so that the createTuple() method can remove values to check for unsupported
         	// TODO make this more efficient? Do single check once to see if fields match up
         	Map<String, String> tupleValues = sourceValues.get(rand.nextInt(sourceValues.size()));
-        	writer.add(workflow.createTuple(context, recordName, new HashMap<String, String>(tupleValues)));
+        	writer.add(workflow.createTuple(context, recordName, new TupleValues(tupleValues)));
         }
 
         writer.close();
@@ -219,11 +230,11 @@ public class WorkFlowStepDefinitions {
     public void the_workflow__xxx_results_should_have_a_record_where(String directoryName, DataTable targetValues) throws Throwable {
     	WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
-        TupleEntryIterator iter = openForRead(context, workflow, directoryName);
+        TupleEntryIterator iter = WorkflowUtils.openForRead(context, workflow, directoryName);
 
         while (iter.hasNext()) {
             TupleEntry te = iter.next();
-            if (tupleMatchesTarget(workflow, te, targetValues.asMap(String.class, String.class))) {
+            if (WorkflowUtils.tupleMatchesTarget(workflow, te, targetValues.asMap(String.class, String.class))) {
                 return;
             }
         }
@@ -232,17 +243,13 @@ public class WorkFlowStepDefinitions {
         		WorkflowContext.getCurrentWorkflowName(), directoryName));
     }
 
-    private TupleEntryIterator openForRead(WorkflowContext context, WorkflowInterface workflow, String directoryName) throws Throwable {
-        return workflow.isBinary(directoryName) ? workflow.openBinaryForRead(context, directoryName) : workflow.openTextForRead(context, directoryName);
-    }
-
     @Then("^the workflow \"(.*?)\" (?:result|results|output|file|directory) should have no records$")
     public void the_workflow__xxx_results_should_have_no_records(String directoryName) throws Throwable {
     	WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
         TupleEntryIterator iter = null;
         try {
-            iter = openForRead(context, workflow, directoryName);
+            iter = WorkflowUtils.openForRead(context, workflow, directoryName);
         } catch (PathNotFoundException e) {
             // no records can mean the dir doesn't exist, or it does but contains no records
             // openBinaryForRead throws PathNotFoundException when the dir exists,
@@ -262,210 +269,50 @@ public class WorkFlowStepDefinitions {
 
     @Then("^the workflow \"(.*?)\" (?:result|results|output|file) should have records where:$")
     public void the_workflow_results_should_have_records_where(String directoryName, DataTable targetValues) throws Throwable {
-    	matchResults(directoryName, targetValues, true);
+        WorkflowUtils.matchResults(directoryName, targetValues, true);
     }
 
 	@Then("^the workflow \"(.*?)\" (?:result|results|output|file) should only have records where:$")
     public void the_workflow_result_should_only_have_records_where(String directoryName, DataTable targetValues) throws Throwable {
-    	matchResults(directoryName, targetValues, false);
+	    WorkflowUtils.matchResults(directoryName, targetValues, false);
     }
 
 	@Then("^the workflow \"(.*?)\" (?:result|results|output|file) should not have records where:$")
 	public void the_workflow_xxx_result_should_not_have_records_where(String directoryName, DataTable excludedValues) throws Throwable {
-	    dontMatchResults(directoryName, excludedValues);
+	    WorkflowUtils.dontMatchResults(directoryName, excludedValues);
 	}
 
 	@Then("^the workflow \"(.*?)\" (?:counter|counter value) should be (\\d+)$")
 	public void the_workflow_counter_should_be(String counterName, long value) throws Throwable {
-	    checkCounter(counterName, value, value);
+	    WorkflowUtils.checkCounter(counterName, value, value);
 	}
 
 	@Then("^the workflow \"(.*?)\" (?:counter|counter value) should be (?:more than|greater than|>) (\\d+)$")
 	public void the_workflow_counter_should_be_more_than(String counterName, long value) throws Throwable {
-	    checkCounter(counterName, value + 1, Long.MAX_VALUE);
+	    WorkflowUtils.checkCounter(counterName, value + 1, Long.MAX_VALUE);
 	}
 
 	@Then("^the workflow \"(.*?)\" (?:counter|counter value) should be (?:at least|>=) (\\d+)$")
 	public void the_workflow_counter_should_be_at_least(String counterName, long value) throws Throwable {
-	    checkCounter(counterName, value, Long.MAX_VALUE);
+	    WorkflowUtils.checkCounter(counterName, value, Long.MAX_VALUE);
 	}
 
 	@Then("^the workflow \"(.*?)\" (?:counter|counter value) should be (?:less than|<) (\\d+)$")
 	public void the_workflow_counter_should_be_less_than(String counterName, long value) throws Throwable {
-	    checkCounter(counterName, Long.MIN_VALUE, value + 1);
+	    WorkflowUtils.checkCounter(counterName, Long.MIN_VALUE, value + 1);
 	}
 
 	@Then("^the workflow \"(.*?)\" (?:counter|counter value) should be (?:at most|<=) (\\d+)$")
 	public void the_workflow_counter_should_be_at_most(String counterName, long value) throws Throwable {
-	    checkCounter(counterName, Long.MIN_VALUE, value);
+	    WorkflowUtils.checkCounter(counterName, Long.MIN_VALUE, value);
 	}
 
 	@Then("^the workflow result should have counters where:$")
 	public void the_workflow_result_should_have_counters_where(List<List<String>> targetValues) throws Throwable {
 		for (List<String> counterAndValue : targetValues) {
 			long targetCount = Long.parseLong(counterAndValue.get(1));
-			checkCounter(counterAndValue.get(0), targetCount, targetCount);
+			WorkflowUtils.checkCounter(counterAndValue.get(0), targetCount, targetCount);
 		}
 	}
 
-	private void checkCounter(String targetCounterName, long minValue, long maxValue) {
-    	Long counterValue = null;
-    	String matchedCounterName = null;
-    	Map<String, Long> counters = WorkflowContext.getCurrentContext().getCounters();
-    	for (String counterName : counters.keySet()) {
-    		if (counterName.equals(targetCounterName) || counterName.endsWith("." + targetCounterName)) {
-    			if (matchedCounterName != null) {
-    	            throw new AssertionError(String.format("Counter \"%s\" for workflow %s has multiple matches: \"%s\" and \"%s\"",
-    	            		targetCounterName,
-    	            		WorkflowContext.getCurrentWorkflowName(),
-    	            		matchedCounterName,
-    	            		counterName));
-
-    			}
-
-    			matchedCounterName = counterName;
-    			counterValue = counters.get(counterName);
-    		}
-    	}
-
-    	// If we can't find the counter, then it has an implicit value of 0
-    	if (counterValue == null) {
-    		counterValue = 0L;
-    	}
-
-    	if (counterValue < minValue) {
-    		throw new AssertionError(String.format("Counter \"%s\" for workflow %s is too small, was %d, must be at least %d",
-            		targetCounterName,
-            		WorkflowContext.getCurrentWorkflowName(),
-            		counterValue,
-            		minValue));
-    	} else if (counterValue > maxValue) {
-    		throw new AssertionError(String.format("Counter \"%s\" for workflow %s is too bog, was %d, must be no more than %d",
-            		targetCounterName,
-            		WorkflowContext.getCurrentWorkflowName(),
-            		counterValue,
-            		maxValue));
-    	}
-	}
-
-    protected void matchResults(String directoryName, DataTable targetValues, boolean allowUnmatchedResults) throws Throwable  {
-        // For every TupleEntry, see if we have a match with one of our target records.
-        // If so, remove its index from the list, and make sure the list is empty when we're done.
-        List<Map<String, String>> remainingValues = new ArrayList<Map<String,String>>(targetValues.asMaps(String.class, String.class));
-
-        WorkflowContext context = WorkflowContext.getCurrentContext();
-        WorkflowInterface workflow = context.getWorkflow();
-        TupleEntryIterator iter = openForRead(context, workflow, directoryName);
-        while (iter.hasNext()) {
-            TupleEntry te = iter.next();
-
-            boolean foundMatch = false;
-            int leastDiffs = Integer.MAX_VALUE;
-            Set<TupleDiff> leastDiffsSet = null;
-
-            for (int i = 0; i < remainingValues.size() && !foundMatch; i++) {
-                Map<String, String> row = remainingValues.get(i);
-                Set<TupleDiff> tupleDiffs = diffTupleAndTarget(workflow, te, row);
-                if(tupleDiffs.size() < leastDiffs) {
-                    leastDiffs = tupleDiffs.size();
-                    leastDiffsSet = tupleDiffs;
-                }
-                if (tupleDiffs.size() == 0) {
-                    foundMatch = true;
-                    remainingValues.remove(i);
-                }
-            }
-
-            if (!foundMatch && !allowUnmatchedResults) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(String.format("Record \"%s\" found for workflow %s in results \"%s\" that weren't in the target list",
-                    te,
-                    context.getWorkflowName(),
-                    directoryName));
-                sb.append("\n");
-                for (TupleDiff diff: leastDiffsSet) {
-                    sb.append(diff.toString()).append("\n");
-                }
-                throw new AssertionError(sb.toString());
-            }
-        }
-
-        if (!remainingValues.isEmpty()) {
-            throw new AssertionError(String.format("No record found for workflow %s in results \"%s\" that matched the target value %s",
-                    context.getWorkflowName(),
-                    directoryName,
-                    remainingValues.get(0)));
-        }
-	}
-
-    protected void dontMatchResults(String directoryName, DataTable excludedValues) throws Throwable  {
-        WorkflowContext context = WorkflowContext.getCurrentContext();
-        WorkflowInterface workflow = context.getWorkflow();
-        TupleEntryIterator iter = openForRead(context, workflow, directoryName);
-        List<Map<String, String>> excludedValuesMap = excludedValues.asMaps(String.class, String.class);
-        while (iter.hasNext()) {
-            TupleEntry te = iter.next();
-
-            for (Map<String, String> row: excludedValuesMap) {
-                if (tupleMatchesTarget(workflow, te, row)) {
-                    throw new AssertionError(String.format("Record \"%s\" found for workflow %s in results \"%s\" that was in the excluded list",
-                    		te,
-                            context.getWorkflowName(),
-                            directoryName));
-                }
-            }
-        }
-	}
-
-    protected boolean tupleMatchesTarget(WorkflowInterface workflow, TupleEntry te, Map<String, String> targetValues) {
-        return diffTupleAndTarget(workflow, te, targetValues).size() == 0;
-    }
-
-    protected Set<TupleDiff> diffTupleAndTarget(WorkflowInterface workflow, TupleEntry te, Map<String, String> targetValues) {
-        return diffTupleAndTarget(workflow, te, targetValues, false);
-    }
-
-        /**
-         * @param workflow     workflow
-         * @param te           source
-         * @param targetValues target
-         * @param reportAdditionalColumns should TupleDiff.ADDITIONAL be reported?
-         * @return
-         */
-    protected Set<TupleDiff> diffTupleAndTarget(WorkflowInterface workflow, TupleEntry te, Map<String, String> targetValues, boolean reportAdditionalColumns) {
-        Set<TupleDiff> diffs = new LinkedHashSet<TupleDiff>();
-        for (Map.Entry<String, String> entry : targetValues.entrySet()) {
-            String fieldName = entry.getKey();
-            final TupleDiff diff = workflow.diffTupleAndTarget(te, fieldName, entry.getValue());
-            if(diff != null) {
-                diffs.add(diff);
-            }
-        }
-
-        if(reportAdditionalColumns) {
-            for (Iterator it = te.getFields().iterator(); it.hasNext(); ) {
-                String field = (String) it.next();
-                final String actual = te.getString(field);
-                if (actual != null && !targetValues.containsKey(field)) {
-                    diffs.add(new TupleDiff(field, null, actual, TupleDiff.Type.ADDITIONAL));
-                }
-            }
-        }
-
-        return diffs;
-    }
-
-    private WorkflowPlatform getPlatform(String workflowName, String platformName) {
-        platformName = platformName.trim();
-
-        if (platformName.isEmpty()) {
-            return WorkflowContext.getContext(workflowName).getDefaultPlatform();
-        } else if (platformName.equals("locally") || platformName.equals("local")) {
-            return WorkflowPlatform.LOCAL;
-        } else if (platformName.equals("on a cluster") || platformName.equals("hdfs")) {
-            return WorkflowPlatform.DISTRIBUTED;
-        } else {
-            throw new IllegalArgumentException(String.format("The workflow platform \"%s\" is unknown", platformName));
-        }
-    }
 }

@@ -113,8 +113,19 @@ public class WordCountTool extends BaseTool implements WorkflowInterface {
 	}
 	
 	@Override
-	public Tuple createTuple(WorkflowContext context, String recordName, Map<String, String> tupleValues) throws Throwable {
+	public Tuple createTuple(WorkflowContext context, String recordName, TupleValues tupleValues) throws Throwable {
         throw new UnsupportedOperationException(String.format("The WordCountTool doesn't support creating test output data"));
+	}
+	
+	@Override
+	public boolean isBinary(String path) {
+        if (path.equals(INPUT_PARAM_NAME)) {
+            return false;
+        } else if (path.equals(OUTPUT_PARAM_NAME)) {
+            return true;
+        } else {
+            throw new IllegalArgumentException(String.format("The directory \"%s\" is unknown", path));
+        }
 	}
 	
     private String convertPath(WorkflowContext context, String path) {

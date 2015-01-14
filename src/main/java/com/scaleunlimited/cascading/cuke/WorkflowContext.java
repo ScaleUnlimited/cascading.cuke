@@ -1,5 +1,7 @@
 package com.scaleunlimited.cascading.cuke;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,11 +47,11 @@ public class WorkflowContext {
         return context;
     }
 
-    public static void registerWorkflow(Class clazz) {
+    public static void registerWorkflow(Class<?> clazz) {
         registerWorkflow(clazz.getCanonicalName(), clazz);
     }
     
-    public static void registerWorkflow(String workflowName, Class clazz) {
+    public static void registerWorkflow(String workflowName, Class<?> clazz) {
         WorkflowContext context = WORKFLOW_CONTEXTS.get(workflowName);
         if (context == null) {
             if (!WorkflowInterface.class.isAssignableFrom(clazz)) {
@@ -81,7 +83,7 @@ public class WorkflowContext {
     }
     
 	private String _name;
-    private Class _class;
+    private Class<?> _class;
     private WorkflowInterface _workflow;
 
     private String _testPath;
@@ -93,7 +95,7 @@ public class WorkflowContext {
     private FlowResult _result;
     private Exception _failure;
 
-    public WorkflowContext(String name, Class clazz) {
+    public WorkflowContext(String name, Class<?> clazz) {
         _params = new HashMap<Scenario, WorkflowParams>();
         _platform = WorkflowPlatform.LOCAL;
     	_name = name;
@@ -150,7 +152,7 @@ public class WorkflowContext {
         return _failure;
     }
     
-    public Class getWorkflowClass() {
+    public Class<?> getWorkflowClass() {
         return _class;
     }
     
@@ -183,8 +185,12 @@ public class WorkflowContext {
 		_testPath = testPath;
 	}
 
-	public String getTestDir() {
-		return _testPath;
+	public String getTestDir() throws IOException {
+	    if (getDefaultPlatform() == WorkflowPlatform.LOCAL) {
+	        return new File(_testPath).getCanonicalPath();
+	    } else {
+	        return _testPath;
+	    }
 	}
 
 }

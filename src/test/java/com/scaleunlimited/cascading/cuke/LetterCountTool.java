@@ -1,7 +1,6 @@
 package com.scaleunlimited.cascading.cuke;
 
 import java.io.File;
-import java.util.Map;
 import java.util.Random;
 
 import cascading.flow.Flow;
@@ -267,39 +266,45 @@ public class LetterCountTool extends BaseTool implements WorkflowInterface {
         }
 	}
 	
+    @Override
+    public boolean isBinary(String path) {
+        return true;
+    }
+    
 	@Override
-	public Tuple createTuple(WorkflowContext context, String recordName, Map<String, String> tupleValues) throws Throwable {
-    	if (!recordName.equals(WORD_COUNT_RECORD_NAME)) {
+	public Tuple createTuple(WorkflowContext context, String recordName, TupleValues tupleValues) throws Throwable {
+
+        if (!recordName.equals(WORD_COUNT_RECORD_NAME)) {
             throw new IllegalArgumentException(String.format("The record name \"%s\" is unknown", recordName));
-    	}
+        }
 
-    	// TODO get random from this workflow's context. Which means finding the context by instantiated workflow class
-    	Random rand = new Random(1L);
-    	
-    	Fields fields = new Fields("word", "count");
-    	TupleEntry result = new TupleEntry(fields, Tuple.size(fields.size()));
-    	
-    	if (tupleValues.containsKey("word")) {
-    		result.setString("word", tupleValues.remove("word"));
-    	} else {
-    		// Set to random word
-    		result.setString("word", RANDOM_WORDS[rand.nextInt(RANDOM_WORDS.length)]);
-    	}
-    	
-    	if (tupleValues.containsKey("count")) {
-    		result.setInteger("count", Integer.parseInt(tupleValues.remove("count")));
-    	} else {
-    		// Set to random count
-    		result.setInteger("count", 1 + rand.nextInt(1000));
-    	}
+        // TODO get random from this workflow's context. Which means finding the context by instantiated workflow class
+        Random rand = new Random(1L);
+        
+        Fields fields = new Fields("word", "count");
+        TupleEntry result = new TupleEntry(fields, Tuple.size(fields.size()));
+        
+        if (tupleValues.containsKey("word")) {
+            result.setString("word", tupleValues.remove("word"));
+        } else {
+            // Set to random word
+            result.setString("word", RANDOM_WORDS[rand.nextInt(RANDOM_WORDS.length)]);
+        }
+        
+        if (tupleValues.containsKey("count")) {
+            result.setInteger("count", Integer.parseInt(tupleValues.remove("count")));
+        } else {
+            // Set to random count
+            result.setInteger("count", 1 + rand.nextInt(1000));
+        }
 
-    	if (!tupleValues.isEmpty()) {
-    		throw new IllegalArgumentException(String.format("Record \"%s\" does not have fields named \"%s\"", recordName, tupleValues.keySet().toString()));
-    	}
-    	
-    	return result.getTuple();
-	}
-
+        if (!tupleValues.isEmpty()) {
+            throw new IllegalArgumentException(String.format("Record \"%s\" does not have fields named \"%s\"", recordName, tupleValues.keySet().toString()));
+        }
+        
+        return result.getTuple();
+    }
+	
     private String convertPath(WorkflowContext context, String path) {
     	if (path.equals(INPUT_PARAM_NAME)) {
     		return context.getParams().get(INPUT_PARAM_NAME);
