@@ -182,7 +182,17 @@ public class WorkflowContext {
     }
 
 	public void setTestDir(String testPath) {
-		_testPath = testPath;
+		_testPath = testPath.replaceAll("\\$\\{scenario\\}", getScenarioName());
+	}
+
+	private String getScenarioName() {
+		String name = CURRENT_SCENARIO.getName();
+		name = name.replaceAll(" ", "_");
+		name = name.replaceAll( "[\u0001-\u001f<>:\"/\\\\|?*\u007f]+", "" ).trim();
+		if (name.length() > 255) {
+			name = name.substring(0, 255);
+		}
+		return name;
 	}
 
 	public String getTestDir() throws IOException {
