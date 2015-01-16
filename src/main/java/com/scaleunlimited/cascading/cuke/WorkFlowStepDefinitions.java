@@ -2,7 +2,6 @@ package com.scaleunlimited.cascading.cuke;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -31,6 +30,7 @@ import cucumber.api.java.en.When;
 
 @SuppressWarnings("unchecked")
 public class WorkFlowStepDefinitions {
+
 
     @Given("^the (.+) package contains the (.+) workflow$")
     public void the_package_contains_the_workflow(String packageName, String workflowName) throws Throwable {
