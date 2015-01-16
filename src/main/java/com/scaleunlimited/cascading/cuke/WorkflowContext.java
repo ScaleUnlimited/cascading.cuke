@@ -182,19 +182,43 @@ public class WorkflowContext {
     }
 
 	public void setTestDir(String testPath) {
+	    // Try to fix up path names for Windows - not sure why we'd need this,
+	    // but some people report issues with test dir paths on Windows.
+	    testPath = testPath.replaceAll("/", File.separator);
 		_testPath = testPath.replaceAll("\\$\\{scenario\\}", getScenarioName());
 	}
 
 	private String getScenarioName() {
-		String name = CURRENT_SCENARIO.getName();
-		name = name.replaceAll(" ", "_");
-		name = name.replaceAll( "[\u0001-\u001f<>:\"/\\\\|?*\u007f]+", "" ).trim();
-		if (name.length() > 255) {
-			name = name.substring(0, 255);
-		}
-		return name;
+		return makePathSafe(CURRENT_SCENARIO.getName());
 	}
 
+    /*
+     * For a list of characters that are invalid in paths, see:
+     * 
+     * http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.asp
+    
+    < (less than)
+    > (greater than)
+    : (colon)
+    " (double quote)
+    / (forward slash)
+    \ (backslash)
+    | (vertical bar or pipe)
+    ? (question mark)
+    * (asterisk)
+
+     */
+	protected static String makePathSafe(String name) {
+	    name = name.trim();
+        name = name.replaceAll("[\u0001-\u001f<>:\"/\\\\|?*\u007f]+", "");
+        name = name.replaceAll("[ ]+", "_");
+        if (name.length() > 255) {
+            name = name.substring(0, 255);
+        }
+        
+        return name;
+	}
+	
 	public String getTestDir() throws IOException {
 	    if (getDefaultPlatform() == WorkflowPlatform.LOCAL) {
 	        return new File(_testPath).getCanonicalPath();
