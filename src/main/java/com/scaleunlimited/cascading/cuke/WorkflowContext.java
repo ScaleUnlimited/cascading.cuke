@@ -136,7 +136,7 @@ public class WorkflowContext {
     }
 
     public void resetParameters(WorkflowParams reset) {
-        if(reset != null) {
+        if (reset != null) {
             _params.put(CURRENT_SCENARIO, reset);
         } else {
             final WorkflowParams params = getParams();
