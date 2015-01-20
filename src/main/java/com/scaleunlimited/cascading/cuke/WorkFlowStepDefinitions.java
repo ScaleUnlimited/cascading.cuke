@@ -79,21 +79,17 @@ public class WorkFlowStepDefinitions {
         // We want to support expansion of ${testdir} for paths.
         for (List<String> parameter : parameters) {
         	if (parameter.size() == 2) {
-        		context.addParameter(parameter.get(0), expandMacros(context, parameter.get(1)));
+        		context.addParameter(parameter.get(0), WorkflowUtils.expandMacros(context, parameter.get(1)));
         	} else {
         		throw new IllegalArgumentException("Workflow parameters must be two column format (| name | value |)");
         	}
         }
     }
 
-	protected String expandMacros(WorkflowContext context, String s) throws IOException {
-		return s.replaceAll("\\$\\{testdir\\}", context.getTestDir());
-	}
-
     @Given("^the workflow parameter \"(.+?)\" is \"(.+)\"$")
     public void the_workflow_parameter_xxx_is_yyy(String paramName, String paramValue) throws Throwable {
         WorkflowContext context = WorkflowContext.getCurrentContext();
-        context.addParameter(paramName, expandMacros(context, paramValue));
+        context.addParameter(paramName, WorkflowUtils.expandMacros(context, paramValue));
     }
 
     @SuppressWarnings("rawtypes")
@@ -168,7 +164,7 @@ public class WorkFlowStepDefinitions {
         // We want to support expansion of ${testdir} for paths.
         for (List<String> parameter : parameters) {
             if (parameter.size() == 2) {
-                context.addParameter(parameter.get(0), expandMacros(context, parameter.get(1)));
+                context.addParameter(parameter.get(0), WorkflowUtils.expandMacros(context, parameter.get(1)));
             } else {
                 throw new IllegalArgumentException("Workflow parameters must be two column format (| name | value |)");
             }

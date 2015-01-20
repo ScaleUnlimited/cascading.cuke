@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 
 import org.apache.hadoop.fs.PathNotFoundException;
 
@@ -61,6 +62,20 @@ public class WorkflowUtils {
         } else {
             throw new IllegalArgumentException(String.format("The workflow platform %s is unknown", platform));
         }
+    }
+
+    /**
+     * Expand the {testdir} macro using the context's setting for this.
+     * 
+     * @param context
+     * @param s
+     * @return
+     * @throws IOException
+     */
+    public static String expandMacros(WorkflowContext context, String s) throws IOException {
+        // Note that we have to use Matcher.quoteReplacement to avoid issues with '/' chars in
+        // Windows paths...thanks Prasanth!
+        return s.replaceAll("\\$\\{testdir\\}", Matcher.quoteReplacement(context.getTestDir()));
     }
 
     /**

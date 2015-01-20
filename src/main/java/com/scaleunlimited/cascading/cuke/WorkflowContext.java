@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
 
 import cucumber.api.Scenario;
 
@@ -75,9 +76,12 @@ public class WorkflowContext {
 
     public static void setCurrentScenario(Scenario scenario) {
         CURRENT_SCENARIO = scenario;
-        if (CURRENT_WORKFLOW == null) return;
+        if (CURRENT_WORKFLOW == null) {
+            return;
+        }
+        
         final WorkflowContext currentContext = getCurrentContext();
-        if(!currentContext._params.containsKey(CURRENT_SCENARIO)) {
+        if (!currentContext._params.containsKey(CURRENT_SCENARIO)) {
             currentContext._params.put(CURRENT_SCENARIO, new WorkflowParams());
         }
     }
@@ -182,14 +186,15 @@ public class WorkflowContext {
     }
 
 	public void setTestDir(String testPath) {
-	    // Try to fix up path names for Windows - not sure why we'd need this,
-	    // but some people report issues with test dir paths on Windows.
-	    testPath = testPath.replaceAll("/", File.separator);
+	    // Fix up Unix/Mac-style path names for Windows, then do macro substitution
+	    // for ${scenario} with the scenario name.
+	    testPath = testPath.replaceAll("/", Matcher.quoteReplacement(File.separator));
 		_testPath = testPath.replaceAll("\\$\\{scenario\\}", getScenarioName());
 	}
 
 	private String getScenarioName() {
-		return makePathSafe(CURRENT_SCENARIO.getName());
+	    // For testing purposes, we don't have a current scenario
+		return makePathSafe(CURRENT_SCENARIO == null ? "scenario" : CURRENT_SCENARIO.getName());
 	}
 
     /*

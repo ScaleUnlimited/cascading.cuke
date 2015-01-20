@@ -1,7 +1,11 @@
 package com.scaleunlimited.cascading.cuke;
 
-import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
 
 import org.junit.Test;
 
@@ -10,6 +14,15 @@ import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 
 public class WorkflowUtilsTest {
+    
+    @Test
+    public void testExpandMacrosWithWindowsPath() throws IOException {
+        WorkflowContext context = new WorkflowContext("name", this.getClass());
+        context.setTestDir("test\\dir");
+        final String expanded = WorkflowUtils.expandMacros(context, "${testdir}");
+        assertTrue("Didn't end with expected result: " + expanded, expanded.endsWith("test\\dir"));
+    }
+    
     @Test
     public void testDiffTupleAndTargetFieldPermutations() {
         String fieldName = "foo_bar";
