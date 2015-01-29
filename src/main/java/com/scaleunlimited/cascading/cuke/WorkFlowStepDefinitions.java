@@ -141,7 +141,8 @@ public class WorkFlowStepDefinitions {
     public void the_tool_is_run() throws Throwable {
         WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
-        workflow.runTool(context);
+        FlowResult result = workflow.runTool(context);
+        context.addResult(result);
     }
     
     @When("^the tool is run with these additional parameters:$")
@@ -151,7 +152,8 @@ public class WorkFlowStepDefinitions {
 
         // Now run the tool
         WorkflowInterface workflow = context.getWorkflow();
-        workflow.runTool(context);
+        FlowResult result = workflow.runTool(context);
+        context.addResult(result);
 
         context.resetParameters(before);
     }
