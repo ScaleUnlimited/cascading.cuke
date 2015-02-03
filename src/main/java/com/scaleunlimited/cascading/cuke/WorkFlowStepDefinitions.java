@@ -38,7 +38,7 @@ public class WorkFlowStepDefinitions {
         WorkflowContext.registerWorkflow(workflowName, clazz);
     }
 
-    @Given("^the workflow will be run (locally| on a cluster) with test directory \"(.+)\"$")
+    @Given("^the (?:workflow|tool) will be run (locally| on a cluster) with test directory \"(.+)\"$")
     public void the_workflow_will_be_run_xxx_with_test_directory_yyy(String platformName, String testDir) throws Throwable {
     	String workflowName = WorkflowContext.getCurrentWorkflowName();
         WorkflowContext.getContext(workflowName).setDefaultPlatform(WorkflowUtils.getPlatform(workflowName, platformName));
