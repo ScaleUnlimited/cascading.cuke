@@ -32,7 +32,7 @@ import cucumber.api.java.en.When;
 public class WorkFlowStepDefinitions {
 
 
-    @Given("^the (.+) package contains the (.+) workflow$")
+    @Given("^the (.+) package contains the (.+) (?:workflow|tool)$")
     public void the_package_contains_the_workflow(String packageName, String workflowName) throws Throwable {
         Class<?> clazz = Class.forName(packageName + "." + workflowName);
         WorkflowContext.registerWorkflow(workflowName, clazz);
@@ -51,7 +51,7 @@ public class WorkFlowStepDefinitions {
     }
 
     @SuppressWarnings("rawtypes")
-	@Given("^the workflow test directory is empty")
+	@Given("^the (?:workflow|tool) test directory is empty")
     public void the_workflow_test_directory_is_empty() throws Throwable {
         WorkflowPlatform platform = WorkflowContext.getCurrentPlatform();
         if (platform == WorkflowPlatform.DISTRIBUTED) {
@@ -70,7 +70,7 @@ public class WorkFlowStepDefinitions {
         }
     }
 
-	@Given("^these parameters for the workflow:$")
+	@Given("^these parameters for the (?:workflow|tool):$")
     public void these_parameters_for_the_workflow(List<List<String>> parameters) throws Throwable {
         WorkflowContext context = WorkflowContext.getCurrentContext();
 
@@ -86,7 +86,7 @@ public class WorkFlowStepDefinitions {
         }
     }
 
-    @Given("^the workflow parameter \"(.+?)\" is \"(.+)\"$")
+    @Given("^the (?:workflow|tool) parameter \"(.+?)\" is \"(.+)\"$")
     public void the_workflow_parameter_xxx_is_yyy(String paramName, String paramValue) throws Throwable {
         WorkflowContext context = WorkflowContext.getCurrentContext();
         context.addParameter(paramName, WorkflowUtils.expandMacros(context, paramValue));
@@ -101,7 +101,7 @@ public class WorkFlowStepDefinitions {
             WorkflowInterface workflow = context.getWorkflow();
             Flow flow = workflow.createFlow(context);
             FlowResult result = FlowRunner.run(flow);
-            context.addResult(result);
+            context.addResult(result.getCounters());
         } catch (PlannerException e) {
             throw new AssertionError(String.format("Workflow run step failed: the plan for workflow %s is invalid: %s", context.getWorkflowName(), e.getMessage()));
         } catch (ClassNotFoundException e) {
@@ -120,7 +120,7 @@ public class WorkFlowStepDefinitions {
         WorkflowInterface workflow = context.getWorkflow();
     	Flow flow = workflow.createFlow(context);
     	FlowResult result = FlowRunner.run(flow);
-    	context.addResult(result);
+    	context.addResult(result.getCounters());
     }
 
     @SuppressWarnings("rawtypes")
@@ -132,7 +132,7 @@ public class WorkFlowStepDefinitions {
         WorkflowInterface workflow = context.getWorkflow();
         Flow flow = workflow.createFlow(context);
         FlowResult result = FlowRunner.run(flow);
-        context.addResult(result);
+        context.addResult(result.getCounters());
 
         context.resetParameters(before);
     }
@@ -141,7 +141,7 @@ public class WorkFlowStepDefinitions {
     public void the_tool_is_run() throws Throwable {
         WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
-        FlowResult result = workflow.runTool(context);
+        Map<String, Long> result = workflow.runTool(context);
         context.addResult(result);
     }
     
@@ -152,7 +152,7 @@ public class WorkFlowStepDefinitions {
 
         // Now run the tool
         WorkflowInterface workflow = context.getWorkflow();
-        FlowResult result = workflow.runTool(context);
+        Map<String, Long> result = workflow.runTool(context);
         context.addResult(result);
 
         context.resetParameters(before);
@@ -175,7 +175,7 @@ public class WorkFlowStepDefinitions {
         return before;
     }
 
-    @Then("^the workflow should fail$")
+    @Then("^the (?:workflow|tool) should fail$")
     public void the_workflow_should_fail() throws Throwable {
         WorkflowContext context = WorkflowContext.getCurrentContext();
 
@@ -184,7 +184,7 @@ public class WorkFlowStepDefinitions {
         }
     }
 
-    @Given("^these text records in the workflow \"(.*?)\" directory:$")
+    @Given("^these text records in the (?:workflow|tool) \"(.*?)\" directory:$")
     public void these_text_records_in_the_workflow_xxx_directory(String directoryName, List<String> textLines) throws Throwable {
         WorkflowContext context = WorkflowContext.getCurrentContext();
         TupleEntryCollector writer = context.getWorkflow().openTextForWrite(context, directoryName);
@@ -198,7 +198,7 @@ public class WorkFlowStepDefinitions {
         }
     }
 
-    @Given("^these \"(.+?)\" records in the workflow \"(.*?)\" directory:$")
+    @Given("^these \"(.+?)\" records in the (?:workflow|tool) \"(.*?)\" directory:$")
     public void these_xxx_records_in_the_workflow_yyy_directory(String recordName, String directoryName, List<Map<String, String>> sourceValues) throws Throwable {
     	WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
@@ -212,7 +212,7 @@ public class WorkFlowStepDefinitions {
         writer.close();
     }
 
-    @Given("^(\\d+) \"(.*?)\" records in the workflow \"(.*?)\" directory:$")
+    @Given("^(\\d+) \"(.*?)\" records in the (?:workflow|tool) \"(.*?)\" directory:$")
     public void xxx_records_in_the_workflow_xxx_directory(int numRecords, String recordName, String directoryName, List<Map<String, String>> sourceValues) throws Throwable {
     	WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
@@ -231,7 +231,7 @@ public class WorkFlowStepDefinitions {
         writer.close();
     }
 
-    @Then("^the workflow \"(.*?)\" (?:result|results|output|file|directory) should have a record where:$")
+    @Then("^the (?:workflow|tool) \"(.*?)\" (?:result|results|output|file|directory) should have a record where:$")
     public void the_workflow__xxx_results_should_have_a_record_where(String directoryName, DataTable targetValues) throws Throwable {
     	WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
@@ -248,7 +248,7 @@ public class WorkFlowStepDefinitions {
         		WorkflowContext.getCurrentWorkflowName(), directoryName));
     }
 
-    @Then("^the workflow \"(.*?)\" (?:result|results|output|file|directory) should have no records$")
+    @Then("^the (?:workflow|tool) \"(.*?)\" (?:result|results|output|file|directory) should have no records$")
     public void the_workflow__xxx_results_should_have_no_records(String directoryName) throws Throwable {
     	WorkflowContext context = WorkflowContext.getCurrentContext();
         WorkflowInterface workflow = context.getWorkflow();
@@ -272,47 +272,47 @@ public class WorkFlowStepDefinitions {
                 WorkflowContext.getCurrentWorkflowName(), directoryName));
     }
 
-    @Then("^the workflow \"(.*?)\" (?:result|results|output|file) should have records where:$")
+    @Then("^the (?:workflow|tool) \"(.*?)\" (?:result|results|output|file) should have records where:$")
     public void the_workflow_results_should_have_records_where(String directoryName, DataTable targetValues) throws Throwable {
         WorkflowUtils.matchResults(directoryName, targetValues, true);
     }
 
-	@Then("^the workflow \"(.*?)\" (?:result|results|output|file) should only have records where:$")
+	@Then("^the (?:workflow|tool) \"(.*?)\" (?:result|results|output|file) should only have records where:$")
     public void the_workflow_result_should_only_have_records_where(String directoryName, DataTable targetValues) throws Throwable {
 	    WorkflowUtils.matchResults(directoryName, targetValues, false);
     }
 
-	@Then("^the workflow \"(.*?)\" (?:result|results|output|file) should not have records where:$")
+	@Then("^the (?:workflow|tool) \"(.*?)\" (?:result|results|output|file) should not have records where:$")
 	public void the_workflow_xxx_result_should_not_have_records_where(String directoryName, DataTable excludedValues) throws Throwable {
 	    WorkflowUtils.dontMatchResults(directoryName, excludedValues);
 	}
 
-	@Then("^the workflow \"(.*?)\" (?:counter|counter value) should be (\\d+)$")
+	@Then("^the (?:workflow|tool) \"(.*?)\" (?:counter|counter value) should be (\\d+)$")
 	public void the_workflow_counter_should_be(String counterName, long value) throws Throwable {
 	    WorkflowUtils.checkCounter(counterName, value, value);
 	}
 
-	@Then("^the workflow \"(.*?)\" (?:counter|counter value) should be (?:more than|greater than|>) (\\d+)$")
+	@Then("^the (?:workflow|tool) \"(.*?)\" (?:counter|counter value) should be (?:more than|greater than|>) (\\d+)$")
 	public void the_workflow_counter_should_be_more_than(String counterName, long value) throws Throwable {
 	    WorkflowUtils.checkCounter(counterName, value + 1, Long.MAX_VALUE);
 	}
 
-	@Then("^the workflow \"(.*?)\" (?:counter|counter value) should be (?:at least|>=) (\\d+)$")
+	@Then("^the (?:workflow|tool) \"(.*?)\" (?:counter|counter value) should be (?:at least|>=) (\\d+)$")
 	public void the_workflow_counter_should_be_at_least(String counterName, long value) throws Throwable {
 	    WorkflowUtils.checkCounter(counterName, value, Long.MAX_VALUE);
 	}
 
-	@Then("^the workflow \"(.*?)\" (?:counter|counter value) should be (?:less than|<) (\\d+)$")
+	@Then("^the (?:workflow|tool) \"(.*?)\" (?:counter|counter value) should be (?:less than|<) (\\d+)$")
 	public void the_workflow_counter_should_be_less_than(String counterName, long value) throws Throwable {
 	    WorkflowUtils.checkCounter(counterName, Long.MIN_VALUE, value + 1);
 	}
 
-	@Then("^the workflow \"(.*?)\" (?:counter|counter value) should be (?:at most|<=) (\\d+)$")
+	@Then("^the (?:workflow|tool) \"(.*?)\" (?:counter|counter value) should be (?:at most|<=) (\\d+)$")
 	public void the_workflow_counter_should_be_at_most(String counterName, long value) throws Throwable {
 	    WorkflowUtils.checkCounter(counterName, Long.MIN_VALUE, value);
 	}
 
-	@Then("^the workflow result should have counters where:$")
+	@Then("^the (?:workflow|tool) result should have counters where:$")
 	public void the_workflow_result_should_have_counters_where(List<List<String>> targetValues) throws Throwable {
 		for (List<String> counterAndValue : targetValues) {
 			long targetCount = Long.parseLong(counterAndValue.get(1));

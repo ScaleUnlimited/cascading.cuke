@@ -30,6 +30,7 @@ public interface WorkflowInterface {
     public TupleDiff diffTupleAndTarget(TupleEntry te, String field, String value);
     
     // Some workflows need to be run as a top-level tool, not a flow. But we still want to return
-    // the results of any Flow that might be run by the tool.
-    public FlowResult runTool(WorkflowContext context) throws Throwable;
+    // the results of any Flow that might be run by the tool, or counters that the tool wants to
+    // pass back.
+    public Map<String, Long> runTool(WorkflowContext context) throws Throwable;
 }

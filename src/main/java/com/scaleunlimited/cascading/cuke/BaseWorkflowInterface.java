@@ -2,8 +2,6 @@ package com.scaleunlimited.cascading.cuke;
 
 import java.util.Map;
 
-import com.scaleunlimited.cascading.FlowResult;
-
 import cascading.flow.Flow;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
@@ -53,7 +51,7 @@ public abstract class BaseWorkflowInterface implements WorkflowInterface {
     }
     
     @Override
-    public FlowResult runTool(WorkflowContext context) throws Throwable {
+    public Map<String, Long> runTool(WorkflowContext context) throws Throwable {
         throw new UnsupportedOperationException();
     }
 }

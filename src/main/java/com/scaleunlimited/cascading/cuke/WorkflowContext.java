@@ -8,6 +8,7 @@ import java.util.regex.Matcher;
 
 import cucumber.api.Scenario;
 
+import com.scaleunlimited.cascading.FlowCounters;
 import com.scaleunlimited.cascading.FlowResult;
 
 public class WorkflowContext {
@@ -95,8 +96,8 @@ public class WorkflowContext {
     private Map<Scenario, WorkflowParams> _params;
 //    private WorkflowParams _backgroundParams;
 
-    // Results from running the workflow
-    private FlowResult _result;
+    // Results from running the workflow or tool
+    private Map<String, Long> _counters;
     private Exception _failure;
 
     public WorkflowContext(String name, Class<?> clazz) {
@@ -119,20 +120,22 @@ public class WorkflowContext {
         return params;
 	}
 
-    public void addResult(FlowResult result) {
-        _result = result;
+    public void addResult(Map<String, Long> result) {
+        _counters = result;
     }
     
     public long getCounter(Enum counter) {
-        return _result.getCounterValue(counter);
+        Long result = _counters.get(FlowCounters.getCounterKey(counter));
+        return (result == null) ? 0 : result;
     }
     
     public long getCounter(String group, String counter) {
-        return _result.getCounterValue(group, counter);
+        Long result = _counters.get(FlowCounters.getCounterKey(group, counter));
+        return (result == null) ? 0 : result;
     }
 
     public Map<String, Long> getCounters() {
-    	return _result.getCounters();
+    	return _counters;
     }
     
     public void addParameter(String paramName, String paramValue) {

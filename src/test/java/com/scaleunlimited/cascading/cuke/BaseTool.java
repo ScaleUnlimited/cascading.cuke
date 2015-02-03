@@ -7,7 +7,6 @@ import com.scaleunlimited.cascading.local.LocalPlatform;
 public abstract class BaseTool extends BaseWorkflowInterface {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	
     protected BasePlatform makePlatform(WorkflowPlatform platform) {
         if (platform == WorkflowPlatform.DISTRIBUTED) {
             return new HadoopPlatform(this.getClass());
