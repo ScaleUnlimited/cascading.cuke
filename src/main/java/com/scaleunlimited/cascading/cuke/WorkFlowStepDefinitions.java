@@ -111,7 +111,6 @@ public class WorkFlowStepDefinitions {
         }
     }
 
-
     @SuppressWarnings("rawtypes")
     @When("^the workflow is run$")
     public void the_workflow_is_run() throws Throwable {
@@ -158,6 +157,19 @@ public class WorkFlowStepDefinitions {
         context.resetParameters(before);
     }
     
+    @When("^the tool run is attempted$")
+    public void the_tool_run_is_attempted() throws Throwable {
+        WorkflowContext context = WorkflowContext.getCurrentContext();
+        WorkflowInterface workflow = context.getWorkflow();
+
+        try {
+            Map<String, Long> result = workflow.runTool(context);
+            context.addResult(result);
+        } catch (Exception e) {
+            context.addFailure(e);
+        }
+    }
+
     private WorkflowParams addParameters(WorkflowContext context, List<List<String>> parameters) throws IOException {
         WorkflowParams before = context.getParams();
 
