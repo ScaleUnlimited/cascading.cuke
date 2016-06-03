@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.regex.Matcher;
 
 import com.scaleunlimited.cascading.FlowCounters;
@@ -99,11 +100,16 @@ public class WorkflowContext {
     private Map<String, Long> _counters;
     private Exception _failure;
 
+    private Random _rand;
+    
     public WorkflowContext(String name, Class<?> clazz) {
         _params = new HashMap<Scenario, WorkflowParams>();
         _platform = WorkflowPlatform.LOCAL;
     	_name = name;
         _class = clazz;
+        
+        // TODO provide control over starting seed?
+        _rand = new Random(System.currentTimeMillis());
     }
 
     public WorkflowParams getParamsCopy() {
@@ -121,6 +127,10 @@ public class WorkflowContext {
 
     public void addResult(Map<String, Long> result) {
         _counters = result;
+    }
+    
+    public Random getRandom() {
+        return _rand;
     }
     
     @SuppressWarnings("rawtypes")

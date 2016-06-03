@@ -278,8 +278,7 @@ public class LetterCountTool extends BaseTool implements WorkflowInterface {
             throw new IllegalArgumentException(String.format("The record name \"%s\" is unknown", recordName));
         }
 
-        // TODO get random from this workflow's context. Which means finding the context by instantiated workflow class
-        Random rand = new Random(1L);
+        Random rand = context.getRandom();
         
         Fields fields = new Fields("word", "count");
         TupleEntry result = new TupleEntry(fields, Tuple.size(fields.size()));

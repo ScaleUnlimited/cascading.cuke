@@ -211,6 +211,24 @@ Feature: Count words
 			| a |
 			| c |
 	
-	# TODO add scenario to test random text generation
-	
+	# We use the "@new" tag here so that we can easily focus on one scenario while creating
+	# the step definition. By running JUnit on the "RunNewCukesTest" class, we'll only run
+	# this one scenario.
+	@new
+	Scenario: We want to provide random input data to the LetterCountTool workflow
+		Given the com.scaleunlimited.cascading.cuke package contains the LetterCountTool workflow
+		And the workflow will be run locally with test directory "build/test/LetterCountTool/"
+		And these parameters for the workflow:
+			| input | ${testdir}/input |
+			| output | ${testdir}/output |
+		
+		And 1000 random "word count" records in the workflow "input" directory
+		When the workflow is run
+		Then the workflow "output" result should have records where:
+			| letter |
+			| a |
+			| b |
+			| c |
+			| d |
+		
 	
