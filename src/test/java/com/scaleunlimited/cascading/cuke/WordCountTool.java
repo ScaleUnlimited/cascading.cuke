@@ -1,7 +1,6 @@
 package com.scaleunlimited.cascading.cuke;
 
 import java.io.File;
-import java.util.Map;
 
 import cascading.flow.Flow;
 import cascading.flow.FlowConnector;

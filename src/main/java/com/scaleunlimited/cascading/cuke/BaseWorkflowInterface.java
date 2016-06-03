@@ -10,6 +10,7 @@ import cascading.tuple.TupleEntryIterator;
 
 public abstract class BaseWorkflowInterface implements WorkflowInterface {
     
+    @SuppressWarnings("rawtypes")
     @Override 
     public Flow createFlow(WorkflowContext context) throws Throwable {
         throw new UnsupportedOperationException();

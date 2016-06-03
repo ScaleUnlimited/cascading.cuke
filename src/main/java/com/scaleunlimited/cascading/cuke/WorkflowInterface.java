@@ -2,8 +2,6 @@ package com.scaleunlimited.cascading.cuke;
 
 import java.util.Map;
 
-import com.scaleunlimited.cascading.FlowResult;
-
 import cascading.flow.Flow;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;

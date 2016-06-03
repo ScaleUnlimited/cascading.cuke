@@ -123,6 +123,7 @@ public class WorkflowContext {
         _counters = result;
     }
     
+    @SuppressWarnings("rawtypes")
     public long getCounter(Enum counter) {
         Long result = _counters.get(FlowCounters.getCounterKey(counter));
         return (result == null) ? 0 : result;

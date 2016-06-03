@@ -46,6 +46,7 @@ public class WorkflowUtils {
         return writer;
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public static TupleEntryIterator openBinaryForRead(WorkflowPlatform platform, String readPath, Fields fields) throws Throwable {
         if (platform == WorkflowPlatform.DISTRIBUTED) {
             Tap tap = new Hfs(new cascading.scheme.hadoop.SequenceFile(fields), readPath);
