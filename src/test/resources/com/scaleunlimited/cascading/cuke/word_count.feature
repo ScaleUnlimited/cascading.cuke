@@ -51,7 +51,7 @@ Feature: Count words
 		When the workflow is run
         Then the workflow "output" result should have a record where:
         	| word | cat |
-			| count | 1 |
+					| count | 1 |
 
 	Scenario: We should be able to filter out low-frequency words
         Given these text records in the workflow "input" directory:
