@@ -6,10 +6,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 
-import cucumber.api.Scenario;
-
 import com.scaleunlimited.cascading.FlowCounters;
-import com.scaleunlimited.cascading.FlowResult;
+
+import cucumber.api.Scenario;
 
 public class WorkflowContext {
     
